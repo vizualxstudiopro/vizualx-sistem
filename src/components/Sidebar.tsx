@@ -248,6 +248,17 @@ export default function Sidebar() {
           Vizito Faqen Publike
         </Link>
 
+        <a
+          href="/VizualX-Admin.apk"
+          download
+          className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 hover:text-[#cfa861] hover:bg-[#cfa861]/5 transition-all duration-200 text-sm font-medium"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Shkarko APK Android
+        </a>
+
         <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-lg">
           <div className="w-8 h-8 rounded-full bg-[#cfa861] flex items-center justify-center text-[#0f1115] font-bold">
             A

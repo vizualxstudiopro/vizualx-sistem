@@ -1,4 +1,5 @@
 import Sidebar from "@/components/Sidebar";
+import AndroidInstallPrompt from "@/components/AndroidInstallPrompt";
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,7 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto relative">
         {children}
       </main>
+      <AndroidInstallPrompt />
     </div>
   );
 }
