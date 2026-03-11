@@ -6,7 +6,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const ADMIN_EMAIL = 'vizualxstudio@gmail.com'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Use cookie-based SSR client in browser (for middleware compat), vanilla client on server
+export const supabase =
+  typeof window !== 'undefined'
+    ? createBrowserClient(supabaseUrl, supabaseKey)
+    : createClient(supabaseUrl, supabaseKey)
 
 export const createBrowserSupabaseClient = () =>
   createBrowserClient(supabaseUrl, supabaseKey)
