@@ -59,13 +59,13 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-gray-400">Duke ngarkuar cilësimet...</div>;
+    return <div className="p-4 md:p-8 text-gray-400">Duke ngarkuar cilësimet...</div>;
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-6 md:space-y-8 p-4 md:p-8">
       <div>
-        <h1 className="text-3xl font-extrabold text-white">Qendra e Kontrollit te Sistemit</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-white">Qendra e Kontrollit te Sistemit</h1>
         <p className="mt-2 text-sm text-gray-400">Menaxhoni pamjen, mirembajtjen dhe sigurine e sistemit.</p>
       </div>
 

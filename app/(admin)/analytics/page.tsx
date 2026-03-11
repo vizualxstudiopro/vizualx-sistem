@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
+      <div className="p-4 md:p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
+      <div className="p-4 md:p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-400">
           <p>Nuk ka të dhëna analitike të disponueshme.</p>
         </div>
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-8 bg-[#0f1115] min-h-screen">
+    <div className="p-4 md:p-8 bg-[#0f1115] min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Error Message */}
         {message && (

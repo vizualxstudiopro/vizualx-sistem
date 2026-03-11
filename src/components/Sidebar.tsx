@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,12 @@ export default function Sidebar() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     void fetchNotifications();
@@ -150,72 +156,84 @@ export default function Sidebar() {
     )},
   ];
 
-  return (
-    <aside className="hidden h-screen w-64 flex-col overflow-hidden bg-[#1a1c23] border-r border-white/5 md:flex">
+  const sidebarContent = (
+    <>
       {/* Logo e Platformës */}
-      <div className="h-20 flex items-center justify-between px-6 border-b border-white/5 relative">
-        <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-1">
+      <div className="h-16 md:h-20 flex items-center justify-between px-4 md:px-6 border-b border-white/5 relative">
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-1">
           VIZUAL<span className="text-[#cfa861]">X</span>
         </h2>
 
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleBellClick}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all hover:border-[#cfa861]/40 hover:text-white"
+              aria-label="Hap njoftimet"
+            >
+              <Bell className="h-4 w-4 md:h-5 md:w-5" />
+              {hasUnreadNotifications ? (
+                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500" />
+              ) : null}
+            </button>
+
+            {isNotificationsOpen ? (
+              <div className="absolute right-0 top-12 z-50 w-72 md:w-80 rounded-2xl border border-white/10 bg-[#111318] p-3 md:p-4 shadow-2xl shadow-black/40">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">Njoftimet e Fundit</h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsNotificationsOpen(false)}
+                    className="text-xs text-gray-500 transition-colors hover:text-white"
+                  >
+                    Mbyll
+                  </button>
+                </div>
+
+                {notificationError ? (
+                  <p className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs text-orange-300">
+                    {notificationError}
+                  </p>
+                ) : notifications.length === 0 ? (
+                  <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-gray-400">
+                    Nuk ka njoftime për momentin.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-3"
+                      >
+                        <div className="mb-1 flex items-start justify-between gap-3">
+                          <p className="text-sm font-semibold text-white">{notification.title}</p>
+                          {!notification.is_read ? <span className="mt-1 h-2 w-2 rounded-full bg-red-500" /> : null}
+                        </div>
+                        <p className="line-clamp-2 text-xs text-gray-400">{notification.message}</p>
+                        <p className="mt-2 text-[11px] uppercase tracking-wide text-[#cfa861]">{notification.type}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Close button on mobile */}
           <button
             type="button"
-            onClick={handleBellClick}
-            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all hover:border-[#cfa861]/40 hover:text-white"
-            aria-label="Hap njoftimet"
+            onClick={() => setIsMobileOpen(false)}
+            className="flex md:hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300"
+            aria-label="Mbyll menunë"
           >
-            <Bell className="h-5 w-5" />
-            {hasUnreadNotifications ? (
-              <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-red-500" />
-            ) : null}
+            <X className="h-5 w-5" />
           </button>
-
-          {isNotificationsOpen ? (
-            <div className="absolute right-0 top-14 z-50 w-80 rounded-2xl border border-white/10 bg-[#111318] p-4 shadow-2xl shadow-black/40">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white">Njoftimet e Fundit</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsNotificationsOpen(false)}
-                  className="text-xs text-gray-500 transition-colors hover:text-white"
-                >
-                  Mbyll
-                </button>
-              </div>
-
-              {notificationError ? (
-                <p className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs text-orange-300">
-                  {notificationError}
-                </p>
-              ) : notifications.length === 0 ? (
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-gray-400">
-                  Nuk ka njoftime për momentin.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-3"
-                    >
-                      <div className="mb-1 flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold text-white">{notification.title}</p>
-                        {!notification.is_read ? <span className="mt-1 h-2 w-2 rounded-full bg-red-500" /> : null}
-                      </div>
-                      <p className="line-clamp-2 text-xs text-gray-400">{notification.message}</p>
-                      <p className="mt-2 text-[11px] uppercase tracking-wide text-[#cfa861]">{notification.type}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       </div>
 
       {/* Lidhjet e Menusë */}
-      <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-8 space-y-2">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 md:px-4 py-4 md:py-8 space-y-1 md:space-y-2">
         {menuItems.map((item) => {
           const isActive = pathname === item.path;
           
@@ -223,7 +241,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-medium transition-all duration-200 ${
                 isActive 
                   ? "bg-[#cfa861]/10 text-[#cfa861]" 
                   : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -236,11 +254,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Pjesa e poshtme (Navigim / Dalja) */}
-      <div className="shrink-0 border-t border-white/5 bg-[#1a1c23] p-4 space-y-3">
+      {/* Pjesa e poshtme */}
+      <div className="shrink-0 border-t border-white/5 bg-[#1a1c23] p-3 md:p-4 space-y-2 md:space-y-3">
         <Link
           href="/"
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 text-sm font-medium"
+          className="flex items-center gap-3 px-3 md:px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200 text-sm font-medium"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-6l6 6m0 0l-6 6m6-6H3" />
@@ -251,7 +269,7 @@ export default function Sidebar() {
         <a
           href="/VizualX-Admin.apk"
           download
-          className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 hover:text-[#cfa861] hover:bg-[#cfa861]/5 transition-all duration-200 text-sm font-medium"
+          className="flex items-center gap-3 px-3 md:px-4 py-2 rounded-lg text-gray-400 hover:text-[#cfa861] hover:bg-[#cfa861]/5 transition-all duration-200 text-sm font-medium"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -259,8 +277,8 @@ export default function Sidebar() {
           Shkarko APK Android
         </a>
 
-        <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-lg">
-          <div className="w-8 h-8 rounded-full bg-[#cfa861] flex items-center justify-center text-[#0f1115] font-bold">
+        <div className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-white/5 rounded-lg">
+          <div className="w-8 h-8 rounded-full bg-[#cfa861] flex items-center justify-center text-[#0f1115] font-bold text-sm">
             A
           </div>
           <div className="flex-1">
@@ -273,7 +291,7 @@ export default function Sidebar() {
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400 transition-all duration-200 hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 md:py-3 text-sm font-semibold text-red-400 transition-all duration-200 hover:bg-red-500/15 hover:text-red-300 disabled:opacity-50"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
@@ -281,6 +299,50 @@ export default function Sidebar() {
           {isLoggingOut ? "Duke dalë..." : "Dil"}
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar with hamburger */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex md:hidden items-center justify-between h-14 px-4 bg-[#1a1c23] border-b border-white/5">
+        <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-1">
+          VIZUAL<span className="text-[#cfa861]">X</span>
+        </h2>
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300"
+          aria-label="Hap menunë"
+        >
+          <Menu className="h-5 w-5" />
+          {hasUnreadNotifications ? (
+            <span className="absolute right-3.5 top-2.5 h-2 w-2 rounded-full bg-red-500" />
+          ) : null}
+        </button>
+      </div>
+
+      {/* Mobile overlay */}
+      {isMobileOpen ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      ) : null}
+
+      {/* Mobile drawer */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-screen w-72 flex-col bg-[#1a1c23] border-r border-white/5 transition-transform duration-300 ease-in-out md:hidden ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        } flex`}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden h-screen w-64 flex-col overflow-hidden bg-[#1a1c23] border-r border-white/5 md:flex">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

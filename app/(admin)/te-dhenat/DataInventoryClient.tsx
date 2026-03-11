@@ -167,11 +167,11 @@ export default function DataInventoryClient({
   );
 
   return (
-    <div className="min-h-screen bg-[#0f1115] p-8 text-white">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen bg-[#0f1115] p-4 md:p-8 text-white">
+      <div className="mx-auto max-w-7xl space-y-6 md:space-y-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold">Të Dhënat</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold">Të Dhënat</h1>
             <p className="mt-2 max-w-3xl text-sm text-gray-400">
               Inventar i kopjueshëm i konfigurimeve, teknologjive dhe strukturës së projektit. Çelësat sekretë
               shfaqen të maskuar për siguri.

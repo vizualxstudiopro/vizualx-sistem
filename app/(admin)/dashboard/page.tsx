@@ -131,10 +131,10 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold text-white">Paneli i Kontrollit</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-white">Paneli i Kontrollit</h1>
         <p className="text-gray-400">Mirëseveke në VizualX. Ja performanca e agjencisë suaj.</p>
       </div>
 

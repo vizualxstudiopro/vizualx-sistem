@@ -207,7 +207,7 @@ export default function WebSettingsPage() {
 
   if (!config) {
     return (
-      <div className="p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
+      <div className="p-4 md:p-8 bg-[#0f1115] min-h-screen flex items-center justify-center">
         <div className="text-center text-gray-400">
           <p>Nuk mund të ngarkohet konfigurimi. Ju lutemi provoni më vonë.</p>
         </div>
@@ -216,7 +216,7 @@ export default function WebSettingsPage() {
   }
 
   return (
-    <div className="p-8 bg-[#0f1115] min-h-screen">
+    <div className="p-4 md:p-8 bg-[#0f1115] min-h-screen">
       <div className="max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-4xl font-black text-white mb-2">Konfigurimet e Web-it</h1>
