@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VizualX Admin</string>
+    <string name="title_activity_main">VizualX Admin</string>
+    <string name="package_name">com.vizualx.admin</string>
+    <string name="custom_url_scheme">com.vizualx.admin</string>
+</resources>
