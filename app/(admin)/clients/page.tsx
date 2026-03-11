@@ -72,8 +72,9 @@ export default function ClientsPage() {
       setIsModalOpen(false);
       setFormData({ name: "", company: "", email: "", phone: "" });
       await fetchClients();
-    } catch {
-      alert("Gabim gjatë ruajtjes. Provoni përnjëherë.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
     }
