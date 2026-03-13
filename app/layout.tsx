@@ -4,17 +4,17 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.vizualx.online"),
   title: {
-    default: "VizualX | Agjenci Digitale Premium",
+    default: "VizualX | Sisteme ERP, Web Development & Branding Premium",
     template: "%s | VizualX",
   },
-  description: "Sisteme ERP, Web Development dhe Brand Identity — VizualX transformon idetë tuaja në zgjidhje dixhitale premium.",
-  keywords: ["VizualX", "web development", "branding", "ERP systems", "social media management", "agjenci digitale", "dizajn"],
+  description: "Agjenci lider në Shqipëri për ndërtimin e sistemeve ERP, faqeve web profesionale, menaxhimin e rrjeteve sociale dhe identitet vizual.",
+  keywords: ["ERP Shqiperi", "Web Development Albania", "Programim", "Branding", "VizualX", "agjenci digitale", "dizajn grafik", "social media management", "faqe web", "identitet vizual"],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "VizualX | Agjenci Digitale Premium",
-    description: "Sisteme ERP, Web Development dhe Brand Identity — zgjidhje dixhitale premium për biznese moderne.",
+    title: "VizualX | Sisteme ERP, Web Development & Branding Premium",
+    description: "Agjenci lider në Shqipëri për ndërtimin e sistemeve ERP, faqeve web profesionale, menaxhimin e rrjeteve sociale dhe identitet vizual.",
     url: "https://www.vizualx.online",
     siteName: "VizualX",
     locale: "sq_AL",
@@ -22,12 +22,22 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VizualX | Agjenci Digitale Premium",
-    description: "Sisteme ERP, Web Development dhe Brand Identity — zgjidhje dixhitale premium për biznese moderne.",
+    title: "VizualX | Sisteme ERP, Web Development & Branding Premium",
+    description: "Agjenci lider në Shqipëri për ndërtimin e sistemeve ERP, faqeve web profesionale dhe identitet vizual.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "GOOGLE_VERIFICATION_CODE_HERE",
   },
 };
 
