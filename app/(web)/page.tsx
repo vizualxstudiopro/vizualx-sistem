@@ -59,28 +59,28 @@ const defaultProjects = [
     title: 'Azalea Wine Cellar',
     category: 'Identitet Marke & Dizajn Etikete',
     description: 'Identitet elegant i markës dhe dizajn premium i etiketave për një koleksion verash luksozi.',
-    image: 'linear-gradient(135deg, #8b5e3f 0%, #d4a574 100%)',
+    image: '/portfolio/project-13.png',
     tags: ['Branding', 'Dizajn', 'Luksozi'],
   },
   {
     title: 'Kreshniku Transport',
     category: 'Platform Web Logjistike',
     description: 'Platformë moderne web për menaxhimin e logjistikës dhe ndjekjen në kohë reale.',
-    image: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    image: '/portfolio/project-14.png',
     tags: ['Web Development', 'Platforma', 'Logjistika'],
   },
   {
     title: 'AUTO MANDI',
     category: 'Sistem ERP i Bazuar në Web',
     description: 'Zgjidhje komprehensive ERP për menaxhimin dhe operacionet e automobilistike.',
-    image: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+    image: '/portfolio/project-15.png',
     tags: ['Web Development', 'ERP', 'Enterprise'],
   },
   {
     title: "Arti i Zemrës",
     category: 'Social Media & Branding Artizan',
     description: 'Stratejia kompjete të mediave shoqeruese dhe branding për tregtimet artizanale.',
-    image: 'linear-gradient(135deg, #c084fc 0%, #e879f9 100%)',
+    image: '/portfolio/project-16.png',
     tags: ['Social Media', 'Branding', 'Strategji'],
   },
 ];
@@ -345,8 +345,16 @@ export default function Home() {
               {/* Project Image/Gradient */}
               <div
                 className="h-64 md:h-80 relative overflow-hidden"
-                style={{ background: project.image }}
+                style={project.image.startsWith('/') || project.image.startsWith('http') ? undefined : { background: project.image }}
               >
+                {(project.image.startsWith('/') || project.image.startsWith('http')) && (
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                )}
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300" />
               </div>
 
