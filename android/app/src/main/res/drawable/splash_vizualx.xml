@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/black" />
+    <item>
+        <inset
+            android:drawable="@drawable/ic_vizualx_mark"
+            android:insetLeft="100dp"
+            android:insetTop="220dp"
+            android:insetRight="100dp"
+            android:insetBottom="220dp" />
+    </item>
+</layer-list>

@@ -9,7 +9,7 @@ export default function AdminLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f1115]">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto relative pt-14 md:pt-0">
+      <main className="flex-1 overflow-y-auto relative pt-14 md:pt-0 pb-[env(safe-area-inset-bottom)]">
         {children}
       </main>
       <AndroidInstallPrompt />
