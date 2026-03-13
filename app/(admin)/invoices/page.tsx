@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Download, Share2, Trash2 } from "lucide-react";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 
 interface Invoice {
   id: string;
@@ -16,6 +17,8 @@ interface Invoice {
   clients?: {
     name: string;
     email: string | null;
+    company: string | null;
+    phone: string | null;
   }[] | null;
 }
 
@@ -23,6 +26,48 @@ interface ClientOption {
   id: string;
   name: string;
 }
+
+type InvoicePdfSettings = {
+  companyName: string;
+  companyTagline: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  companyWebsite: string;
+  companyNipt: string;
+  individualClientName: string;
+  clientCif: string;
+  personalSsn: string;
+  bankName: string;
+  bankBranch: string;
+  bankAccountTitle: string;
+  bankAccountNumber: string;
+  bankCurrency: string;
+  bankIban: string;
+  bankSwift: string;
+};
+
+const INVOICE_SETTINGS_PATH = "config/invoice-pdf-settings.json";
+
+const defaultInvoicePdfSettings: InvoicePdfSettings = {
+  companyName: "VizualX Studio",
+  companyTagline: "Digital Systems, Branding & Growth",
+  companyAddress: "Tirane, Shqiperi",
+  companyPhone: "+355 69 69 69 348",
+  companyEmail: "suport@vizualx.online",
+  companyWebsite: "https://www.vizualx.online",
+  companyNipt: "K00000000A",
+  individualClientName: "BESMIR GERMIZI",
+  clientCif: "419861856",
+  personalSsn: "I71020037K",
+  bankName: "BANKA KOMBETARE TREGTARE",
+  bankBranch: "BKT - DEGA KUKES",
+  bankAccountTitle: "BESMIR LUTFI GERMIZI",
+  bankAccountNumber: "419861856CLIDCLALLVB",
+  bankCurrency: "ALL",
+  bankIban: "AL1020555193861856CLIDCLALLV",
+  bankSwift: "NCBAALTX",
+};
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -48,12 +93,54 @@ function formatInvoiceDate(invoice: Invoice) {
   });
 }
 
-function buildInvoicePdf(invoice: Invoice) {
+function mergeInvoiceSettings(raw: unknown): InvoicePdfSettings {
+  if (!raw || typeof raw !== "object") {
+    return defaultInvoicePdfSettings;
+  }
+
+  const parsed = raw as Partial<InvoicePdfSettings>;
+  return {
+    ...defaultInvoicePdfSettings,
+    ...Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) => typeof value === "string")
+    ),
+  } as InvoicePdfSettings;
+}
+
+function getInvoiceNumber(invoice: Invoice) {
+  const year = new Date(invoice.date || invoice.created_at || Date.now()).getFullYear();
+  const shortId = invoice.id.replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `INV-${year}-${shortId}`;
+}
+
+async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   const clientName = invoice.clients?.[0]?.name || "Pa klient";
-  const amount = `EUR ${invoice.amount?.toFixed(2) || "0.00"}`;
+  const clientEmail = invoice.clients?.[0]?.email || "-";
+  const clientCompany = invoice.clients?.[0]?.company || "-";
+  const clientPhone = invoice.clients?.[0]?.phone || "-";
+  const amountNumber = Number(invoice.amount || 0);
+  const amount = `EUR ${amountNumber.toFixed(2)}`;
   const status = invoice.status === "paid" ? "E Paguar" : "Pa Paguar";
   const date = formatInvoiceDate(invoice);
   const service = invoice.service || "-";
+  const invoiceNo = getInvoiceNumber(invoice);
+  const qrValue = JSON.stringify({
+    invoiceNo,
+    id: invoice.id,
+    amount,
+    status,
+    client: clientName,
+    date,
+    issuer: settings.companyName,
+  });
+  const qrDataUrl = await QRCode.toDataURL(qrValue, {
+    margin: 0,
+    width: 220,
+    color: {
+      dark: "#111111",
+      light: "#ffffff",
+    },
+  });
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -61,39 +148,136 @@ function buildInvoicePdf(invoice: Invoice) {
     format: "a4",
   });
 
-  doc.setFillColor(16, 16, 16);
-  doc.rect(0, 0, 595, 70, "F");
-  doc.setTextColor(197, 160, 89);
+  const pageWidth = 595;
+
+  doc.setFillColor(15, 17, 21);
+  doc.rect(0, 0, pageWidth, 128, "F");
+
+  doc.setFillColor(197, 160, 89);
+  doc.roundedRect(36, 30, 58, 58, 10, 10, "F");
+  doc.setDrawColor(15, 17, 21);
+  doc.setLineWidth(4);
+  doc.line(50, 44, 65, 59);
+  doc.line(50, 74, 65, 59);
+  doc.line(80, 44, 65, 59);
+  doc.line(80, 74, 65, 59);
+
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("VIZUALX", 40, 45);
+  doc.setFontSize(24);
+  doc.text("VIZUALX", 110, 55);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(214, 214, 214);
+  doc.text(settings.companyTagline, 110, 74);
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("INVOICE", 440, 48);
+  doc.setTextColor(197, 160, 89);
+  doc.setFontSize(11);
+  doc.text(invoiceNo, 440, 68);
+  doc.setTextColor(220, 220, 220);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Date: ${date}`, 440, 86);
+  doc.text(`Status: ${status}`, 440, 102);
+
+  doc.setFillColor(252, 249, 242);
+  doc.roundedRect(36, 146, 252, 138, 10, 10, "F");
+  doc.setFillColor(245, 247, 250);
+  doc.roundedRect(306, 146, 252, 138, 10, 10, "F");
+
+  doc.setTextColor(145, 110, 48);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("From", 52, 170);
+  doc.text("Bill To", 322, 170);
 
   doc.setTextColor(17, 24, 39);
-  doc.setFontSize(18);
-  doc.text("Fature", 40, 105);
+  doc.setFontSize(13);
+  doc.text(settings.companyName, 52, 192);
+  doc.text(clientName, 322, 192);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
+  doc.setFontSize(10.5);
+  doc.text(settings.companyAddress, 52, 211);
+  doc.text(`Phone: ${settings.companyPhone}`, 52, 228);
+  doc.text(`Email: ${settings.companyEmail}`, 52, 245);
+  doc.text(`NIPT: ${settings.companyNipt}`, 52, 262);
 
-  const rows: Array<[string, string]> = [
-    ["ID", invoice.id],
-    ["Klienti", clientName],
-    ["Sherbimi", service],
-    ["Shuma", amount],
-    ["Statusi", status],
-    ["Data", date],
-  ];
+  doc.text(`Company: ${clientCompany}`, 322, 211);
+  doc.text(`Phone: ${clientPhone}`, 322, 228);
+  doc.text(`Email: ${clientEmail}`, 322, 245);
+  doc.text(`Individ: ${settings.individualClientName}`, 322, 262);
+  doc.text(`CIF: ${settings.clientCif}`, 322, 279);
+  doc.text(`SSN: ${settings.personalSsn}`, 322, 296);
 
-  let y = 145;
-  rows.forEach(([label, value]) => {
-    doc.setTextColor(107, 114, 128);
-    doc.text(label, 40, y);
-    doc.setTextColor(17, 24, 39);
-    doc.text(value, 180, y);
-    doc.setDrawColor(229, 231, 235);
-    doc.line(40, y + 12, 555, y + 12);
-    y += 34;
-  });
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(36, 306, 522, 148, 10, 10, "F");
+  doc.setDrawColor(229, 231, 235);
+  doc.roundedRect(36, 306, 522, 148, 10, 10, "S");
+
+  doc.setFillColor(247, 248, 250);
+  doc.roundedRect(52, 324, 490, 34, 6, 6, "F");
+  doc.setTextColor(107, 114, 128);
+  doc.setFont("helvetica", "bold");
+  doc.text("Description", 62, 346);
+  doc.text("Amount", 500, 346, { align: "right" });
+
+  doc.setTextColor(17, 24, 39);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(service, 62, 382);
+  doc.setFont("helvetica", "bold");
+  doc.text(amount, 500, 382, { align: "right" });
+
+  doc.setDrawColor(231, 231, 231);
+  doc.line(52, 398, 542, 398);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(75, 85, 99);
+  doc.text("Subtotal", 430, 418);
+  doc.text(amount, 500, 418, { align: "right" });
+  doc.text("TVSH", 430, 436);
+  doc.text("EUR 0.00", 500, 436, { align: "right" });
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(145, 110, 48);
+  doc.text("Total", 430, 452);
+  doc.text(amount, 500, 452, { align: "right" });
+
+  doc.addImage(qrDataUrl, "PNG", 52, 470, 88, 88);
+  doc.setTextColor(120, 120, 120);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text("Scan per verifikim fature", 52, 566);
+
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(158, 470, 400, 124, 10, 10, "F");
+  doc.setDrawColor(229, 231, 235);
+  doc.roundedRect(158, 470, 400, 124, 10, 10, "S");
+  doc.setTextColor(145, 110, 48);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("KONFIRMIM I LLOGARISE BANKARE", 170, 490);
+
+  doc.setTextColor(70, 70, 70);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.4);
+  doc.text(`Emri i Bankes: ${settings.bankName}`, 170, 508);
+  doc.text(`Dega: ${settings.bankBranch}`, 170, 521);
+  doc.text(`Emertimi i Llogarise: ${settings.bankAccountTitle}`, 170, 534);
+  doc.text(`Numri i Llogarise: ${settings.bankAccountNumber}`, 170, 547);
+  doc.text(`Monedha: ${settings.bankCurrency}`, 170, 560);
+  doc.text(`IBAN: ${settings.bankIban}`, 170, 573);
+  doc.text(`Swift Kodi: ${settings.bankSwift}`, 170, 586);
+
+  doc.setTextColor(125, 125, 125);
+  doc.text(
+    `Kjo fature eshte gjeneruar nga ${settings.companyName} | ${settings.companyWebsite}`,
+    36,
+    805
+  );
 
   return doc;
 }
@@ -101,6 +285,8 @@ function buildInvoicePdf(invoice: Invoice) {
 export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
+  const [pdfSettings, setPdfSettings] = useState<InvoicePdfSettings>(defaultInvoicePdfSettings);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,7 +303,23 @@ export default function InvoicesPage() {
   useEffect(() => {
     fetchClients();
     fetchInvoices();
+    void loadInvoiceSettings();
   }, []);
+
+  async function loadInvoiceSettings() {
+    try {
+      const { data } = supabase.storage
+        .from("website-images")
+        .getPublicUrl(INVOICE_SETTINGS_PATH);
+
+      const response = await fetch(`${data.publicUrl}?t=${Date.now()}`);
+      if (!response.ok) return;
+
+      const json = (await response.json()) as unknown;
+      setPdfSettings(mergeInvoiceSettings(json));
+    } catch {
+    }
+  }
 
   async function fetchClients() {
     try {
@@ -137,7 +339,7 @@ export default function InvoicesPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("invoices")
-        .select("id, client_id, service, amount, status, date, created_at, clients(name, email)")
+        .select("id, client_id, service, amount, status, date, created_at, clients(name, email, company, phone)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -274,8 +476,41 @@ export default function InvoicesPage() {
     }
   }
 
-  function handleDownloadPdf(invoice: Invoice) {
-    const doc = buildInvoicePdf(invoice);
+  function handleSettingsChange<K extends keyof InvoicePdfSettings>(
+    key: K,
+    value: InvoicePdfSettings[K]
+  ) {
+    setPdfSettings((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  async function handleSaveInvoiceSettings() {
+    try {
+      setSettingsSaving(true);
+      const payload = JSON.stringify(pdfSettings, null, 2);
+      const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+
+      const { error } = await supabase.storage
+        .from("website-images")
+        .upload(INVOICE_SETTINGS_PATH, blob, {
+          contentType: "application/json",
+          upsert: true,
+          cacheControl: "60",
+        });
+
+      if (error) throw error;
+      alert("Cilesimet e fatures u ruajten me sukses.");
+    } catch (error) {
+      alert(`Ruajtja deshtoi: ${getErrorMessage(error)}`);
+    } finally {
+      setSettingsSaving(false);
+    }
+  }
+
+  async function handleDownloadPdf(invoice: Invoice) {
+    const doc = await buildInvoicePdf(invoice, pdfSettings);
     doc.save(`fature-${invoice.id}.pdf`);
   }
 
@@ -284,7 +519,7 @@ export default function InvoicesPage() {
     const title = `Fature VizualX - ${clientName}`;
     const text = `Fature per ${invoice.service || "sherbim"} me vlere EUR ${invoice.amount?.toFixed(2) || "0.00"}`;
 
-    const doc = buildInvoicePdf(invoice);
+    const doc = await buildInvoicePdf(invoice, pdfSettings);
     const pdfBlob = doc.output("blob");
     const pdfFile = new File([pdfBlob], `fature-${invoice.id}.pdf`, {
       type: "application/pdf",
@@ -351,9 +586,47 @@ export default function InvoicesPage() {
         </div>
       ) : null}
 
+      <div className="mb-6 rounded-2xl border border-white/10 bg-[#151820] p-5 md:p-6">
+        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white">Cilesimet e Templates se Fatures</h2>
+            <p className="text-xs text-gray-400">Te dhenat qe perdoren ne PDF (kompani, klient individ dhe banka).</p>
+          </div>
+          <button
+            onClick={handleSaveInvoiceSettings}
+            disabled={settingsSaving}
+            className="rounded-lg bg-[#cfa861] px-4 py-2 text-sm font-bold text-[#0f1115] transition-colors hover:bg-[#e8c96f] disabled:opacity-60"
+          >
+            {settingsSaving ? "Duke ruajtur..." : "Ruaj Cilesimet"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <input value={pdfSettings.companyName} onChange={(e) => handleSettingsChange("companyName", e.target.value)} placeholder="Emri i kompanise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyTagline} onChange={(e) => handleSettingsChange("companyTagline", e.target.value)} placeholder="Tagline" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyAddress} onChange={(e) => handleSettingsChange("companyAddress", e.target.value)} placeholder="Adresa" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyPhone} onChange={(e) => handleSettingsChange("companyPhone", e.target.value)} placeholder="Telefoni" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyEmail} onChange={(e) => handleSettingsChange("companyEmail", e.target.value)} placeholder="Email" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyWebsite} onChange={(e) => handleSettingsChange("companyWebsite", e.target.value)} placeholder="Website" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.companyNipt} onChange={(e) => handleSettingsChange("companyNipt", e.target.value)} placeholder="NIPT" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.individualClientName} onChange={(e) => handleSettingsChange("individualClientName", e.target.value)} placeholder="Emri i Klientit Individ" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.clientCif} onChange={(e) => handleSettingsChange("clientCif", e.target.value)} placeholder="Numri i Klientit (CIF)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.personalSsn} onChange={(e) => handleSettingsChange("personalSsn", e.target.value)} placeholder="Numri Personal (SSN)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankName} onChange={(e) => handleSettingsChange("bankName", e.target.value)} placeholder="Emri i Bankes" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankBranch} onChange={(e) => handleSettingsChange("bankBranch", e.target.value)} placeholder="Dega" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankAccountTitle} onChange={(e) => handleSettingsChange("bankAccountTitle", e.target.value)} placeholder="Emertimi i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankAccountNumber} onChange={(e) => handleSettingsChange("bankAccountNumber", e.target.value)} placeholder="Numri i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankCurrency} onChange={(e) => handleSettingsChange("bankCurrency", e.target.value)} placeholder="Monedha" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankIban} onChange={(e) => handleSettingsChange("bankIban", e.target.value)} placeholder="IBAN" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={pdfSettings.bankSwift} onChange={(e) => handleSettingsChange("bankSwift", e.target.value)} placeholder="Swift Kodi" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+        </div>
+      </div>
+
       {/* Table */}
+      <div className="mb-3 text-xs text-gray-500 md:hidden">Rrëshqit horizontalisht për të parë të gjitha kolonat dhe opsionet.</div>
       <div className="bg-[#1a1c23] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[1060px] text-left">
           <thead>
             <tr className="bg-white/[0.02] text-gray-400 text-xs uppercase tracking-widest border-b border-white/5">
               <th className="px-6 py-5">Klienti</th>
@@ -441,6 +714,7 @@ export default function InvoicesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal - Create Invoice */}
