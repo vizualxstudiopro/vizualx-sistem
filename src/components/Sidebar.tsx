@@ -325,17 +325,28 @@ export default function Sidebar() {
         <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-1">
           VIZUAL<span className="text-[#cfa861]">X</span>
         </h2>
-        <button
-          type="button"
-          onClick={() => setIsMobileOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300"
-          aria-label="Hap menunë"
-        >
-          <Menu className="h-5 w-5" />
-          {hasUnreadNotifications ? (
-            <span className="absolute right-3.5 top-2.5 h-2 w-2 rounded-full bg-red-500" />
-          ) : null}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleAppRefresh}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all hover:border-[#cfa861]/40 hover:text-white"
+            aria-label="Rifresko aplikacionin"
+            title="Rifresko aplikacionin"
+          >
+            <RefreshCw className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300"
+            aria-label="Hap menunë"
+          >
+            <Menu className="h-5 w-5" />
+            {hasUnreadNotifications ? (
+              <span className="absolute right-3 top-2.5 h-2 w-2 rounded-full bg-red-500" />
+            ) : null}
+          </button>
+        </div>
       </div>
 
       {/* Mobile overlay */}

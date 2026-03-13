@@ -265,7 +265,7 @@ export default function Dashboard() {
           <Link href="/invoices" className="text-[#cfa861] text-sm hover:underline">Shiko të Gjithë →</Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-white/10">
               <tr>
                 <th className="pb-3 text-gray-400 font-medium">Klienti</th>

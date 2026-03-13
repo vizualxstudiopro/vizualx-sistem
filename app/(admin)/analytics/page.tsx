@@ -285,7 +285,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
                 <tr className="border-b border-white/5 bg-white/2">
                   <th className="px-8 py-4 text-left text-gray-400 font-medium">Ora</th>

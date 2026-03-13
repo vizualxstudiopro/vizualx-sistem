@@ -238,8 +238,10 @@ export default function DomainsPage() {
       )}
 
       {/* Domains Table */}
+      <div className="mb-3 text-xs text-gray-500 md:hidden">Rrëshqit horizontalisht për të parë të gjitha kolonat.</div>
       <div className="bg-[#1a1c23] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[980px] text-left">
           <thead>
             <tr className="bg-white/[0.02] text-gray-400 text-xs uppercase tracking-widest border-b border-white/5">
               <th className="px-6 py-5">
@@ -317,6 +319,7 @@ export default function DomainsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
