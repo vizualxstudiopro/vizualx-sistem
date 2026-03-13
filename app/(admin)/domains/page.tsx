@@ -81,8 +81,9 @@ export default function DomainsPage() {
         price: "",
       });
       await fetchDomains();
-    } catch {
-      alert("Gabim gjatë ruajtjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -95,8 +96,9 @@ export default function DomainsPage() {
       const { error } = await supabase.from("domains").delete().eq("id", id);
       if (error) throw error;
       await fetchDomains();
-    } catch {
-      alert("Gabim gjatë fshirjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë fshirjes: " + message);
     }
   }
 

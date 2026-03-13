@@ -95,8 +95,9 @@ export default function SocialPage() {
         status: "draft",
       });
       await fetchPosts();
-    } catch {
-      alert("Gabim gjatë ruajtjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -109,8 +110,9 @@ export default function SocialPage() {
       const { error } = await supabase.from("social_posts").delete().eq("id", id);
       if (error) throw error;
       await fetchPosts();
-    } catch {
-      alert("Gabim gjatë fshirjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë fshirjes: " + message);
     }
   }
 

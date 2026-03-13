@@ -100,8 +100,9 @@ export default function AssetsPage() {
         after_image_url: "",
       });
       await fetchAssets();
-    } catch {
-      alert("Gabim gjatë ruajtjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -114,8 +115,9 @@ export default function AssetsPage() {
       const { error } = await supabase.from("media_assets").delete().eq("id", id);
       if (error) throw error;
       await fetchAssets();
-    } catch {
-      alert("Gabim gjatë fshirjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë fshirjes: " + message);
     }
   }
 

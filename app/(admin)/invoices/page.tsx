@@ -118,8 +118,9 @@ export default function InvoicesPage() {
       });
       setIsModalOpen(false);
       await fetchInvoices();
-    } catch {
-      alert("Gabim gjatë ruajtjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -132,8 +133,9 @@ export default function InvoicesPage() {
       const { error } = await supabase.from("invoices").delete().eq("id", id);
       if (error) throw error;
       await fetchInvoices();
-    } catch {
-      alert("Gabim gjatë fshirjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë fshirjes: " + message);
     }
   }
 

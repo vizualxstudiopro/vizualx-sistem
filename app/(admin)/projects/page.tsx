@@ -73,8 +73,9 @@ export default function ProjectsPage() {
       setIsModalOpen(false);
       setFormData({ title: '', client_name: '' });
       await fetchTasks();
-    } catch {
-      alert('Gabim gjatë ruajtjes. Provoni përnjëherë.');
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert('Gabim gjatë ruajtjes: ' + message);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,8 +88,9 @@ export default function ProjectsPage() {
       const { error } = await supabase.from('tasks').delete().eq('id', id);
       if (error) throw error;
       await fetchTasks();
-    } catch {
-      alert('Gabim gjatë fshirjes. Provoni përnjëherë.');
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert('Gabim gjatë fshirjes: ' + message);
     }
   }
 
@@ -114,8 +116,9 @@ export default function ProjectsPage() {
         .eq('id', draggedTask.id);
 
       if (error) throw error;
-    } catch {
-      alert('Gabim gjatë përditësimit. Provoni përnjëherë.');
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert('Gabim gjatë përditësimit: ' + message);
       // Rikthe në statusin e vjetër nëse update dështoi
       await fetchTasks();
     }

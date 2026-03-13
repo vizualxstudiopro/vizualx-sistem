@@ -72,8 +72,8 @@ export default function ClientsPage() {
       setIsModalOpen(false);
       setFormData({ name: "", company: "", email: "", phone: "" });
       await fetchClients();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
       alert("Gabim gjatë ruajtjes: " + message);
     } finally {
       setIsSubmitting(false);
@@ -87,8 +87,9 @@ export default function ClientsPage() {
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
       await fetchClients();
-    } catch {
-      alert("Gabim gjatë fshirjes. Provoni përnjëherë.");
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || JSON.stringify(err);
+      alert("Gabim gjatë fshirjes: " + message);
     }
   }
 
