@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Trash2 } from "lucide-react";
+import { Download, Share2, Trash2 } from "lucide-react";
+import jsPDF from "jspdf";
 
 interface Invoice {
   id: string;
@@ -34,6 +35,67 @@ function getErrorMessage(error: unknown) {
   }
 
   return String(error);
+}
+
+function formatInvoiceDate(invoice: Invoice) {
+  const rawDate = invoice.date || invoice.created_at;
+  if (!rawDate) return "-";
+
+  return new Date(rawDate).toLocaleDateString("sq-AL", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function buildInvoicePdf(invoice: Invoice) {
+  const clientName = invoice.clients?.[0]?.name || "Pa klient";
+  const amount = `EUR ${invoice.amount?.toFixed(2) || "0.00"}`;
+  const status = invoice.status === "paid" ? "E Paguar" : "Pa Paguar";
+  const date = formatInvoiceDate(invoice);
+  const service = invoice.service || "-";
+
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "a4",
+  });
+
+  doc.setFillColor(16, 16, 16);
+  doc.rect(0, 0, 595, 70, "F");
+  doc.setTextColor(197, 160, 89);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text("VIZUALX", 40, 45);
+
+  doc.setTextColor(17, 24, 39);
+  doc.setFontSize(18);
+  doc.text("Fature", 40, 105);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+
+  const rows: Array<[string, string]> = [
+    ["ID", invoice.id],
+    ["Klienti", clientName],
+    ["Sherbimi", service],
+    ["Shuma", amount],
+    ["Statusi", status],
+    ["Data", date],
+  ];
+
+  let y = 145;
+  rows.forEach(([label, value]) => {
+    doc.setTextColor(107, 114, 128);
+    doc.text(label, 40, y);
+    doc.setTextColor(17, 24, 39);
+    doc.text(value, 180, y);
+    doc.setDrawColor(229, 231, 235);
+    doc.line(40, y + 12, 555, y + 12);
+    y += 34;
+  });
+
+  return doc;
 }
 
 export default function InvoicesPage() {
@@ -212,6 +274,52 @@ export default function InvoicesPage() {
     }
   }
 
+  function handleDownloadPdf(invoice: Invoice) {
+    const doc = buildInvoicePdf(invoice);
+    doc.save(`fature-${invoice.id}.pdf`);
+  }
+
+  async function handleShareInvoice(invoice: Invoice) {
+    const clientName = invoice.clients?.[0]?.name || "Klient";
+    const title = `Fature VizualX - ${clientName}`;
+    const text = `Fature per ${invoice.service || "sherbim"} me vlere EUR ${invoice.amount?.toFixed(2) || "0.00"}`;
+
+    const doc = buildInvoicePdf(invoice);
+    const pdfBlob = doc.output("blob");
+    const pdfFile = new File([pdfBlob], `fature-${invoice.id}.pdf`, {
+      type: "application/pdf",
+    });
+
+    if (
+      navigator.share &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [pdfFile] })
+    ) {
+      try {
+        await navigator.share({ title, text, files: [pdfFile] });
+      } catch {
+      }
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text });
+      } catch {
+      }
+      return;
+    }
+
+    const shareText = `${title}\n${text}`;
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      alert("Teksti i fatures u kopjua. Mund ta shperndash tani.");
+    } catch {
+      alert("Shperndarja nuk mbeshtetet ne kete pajisje.");
+    }
+  }
+
   return (
     <div className="p-4 md:p-8">
       {/* Header */}
@@ -292,23 +400,25 @@ export default function InvoicesPage() {
                       {invoice.status === "paid" ? "✓ E Paguar" : "⏳ Pa Paguar"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500 text-sm">
-                    {invoice.date
-                      ? new Date(invoice.date).toLocaleDateString("sq-AL", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : invoice.created_at
-                        ? new Date(invoice.created_at).toLocaleDateString("sq-AL", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "-"}
-                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">{formatInvoiceDate(invoice)}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleDownloadPdf(invoice)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                        title="Shkarko PDF"
+                      >
+                        <Download className="w-4 h-4" />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => handleShareInvoice(invoice)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                        title="Shperndaj"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Shperndaj
+                      </button>
                       <button
                         onClick={() => handleSendInvoiceEmail(invoice)}
                         disabled={emailSendingId === invoice.id || !invoice.clients?.[0]?.email}

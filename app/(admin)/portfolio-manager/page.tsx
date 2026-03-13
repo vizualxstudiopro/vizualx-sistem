@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff, Trash2, Plus } from "lucide-react";
+import { Eye, EyeOff, Trash2, Plus, Pencil } from "lucide-react";
 
 interface PortfolioProject {
   id: string;
@@ -17,6 +17,7 @@ export default function PortfolioManagerPage() {
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -103,6 +104,57 @@ export default function PortfolioManagerPage() {
     }
   }
 
+  async function handleUpdateProject(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!editingProject) return;
+
+    if (!formData.title || !formData.category || !formData.client_name) {
+      alert("Plotësoni të gjitha fushat e detyrueshme");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { error } = await supabase
+        .from("portfolio_projects")
+        .update({
+          title: formData.title,
+          category: formData.category,
+          client_name: formData.client_name,
+          image_url: formData.image_url,
+        })
+        .eq("id", editingProject.id);
+
+      if (error) throw error;
+
+      setIsModalOpen(false);
+      setEditingProject(null);
+      setFormData({
+        title: "",
+        category: "",
+        client_name: "",
+        image_url: "",
+      });
+      await fetchProjects();
+    } catch {
+      alert("Gabim gjatë përditësimit. Provoni përnjëherë.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleOpenEdit(project: PortfolioProject) {
+    setEditingProject(project);
+    setFormData({
+      title: project.title || "",
+      category: project.category || "",
+      client_name: project.client_name || "",
+      image_url: project.image_url || "",
+    });
+    setIsModalOpen(true);
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Jeni i sigurt që dëshironi të fshini këtë projekt?")) return;
 
@@ -127,7 +179,16 @@ export default function PortfolioManagerPage() {
           <p className="text-gray-400 text-sm mt-1">Menaxhoni projektet e portofolit dhe publikimin e tyre.</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingProject(null);
+            setFormData({
+              title: "",
+              category: "",
+              client_name: "",
+              image_url: "",
+            });
+            setIsModalOpen(true);
+          }}
           className="bg-[#cfa861] hover:bg-[#e8c96f] text-[#0f1115] px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg hover:shadow-[#cfa861]/30"
         >
           <Plus className="w-5 h-5" />
@@ -139,9 +200,11 @@ export default function PortfolioManagerPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-[#1a1c23] border border-[#cfa861]/30 rounded-2xl shadow-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Shto Projekt të Ri</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              {editingProject ? "Përditëso Projektin" : "Shto Projekt të Ri"}
+            </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={editingProject ? handleUpdateProject : handleSubmit} className="space-y-5">
               {/* Title */}
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -212,7 +275,11 @@ export default function PortfolioManagerPage() {
                   disabled={isSubmitting}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-[#cfa861] text-[#0f1115] font-bold hover:bg-[#e8c96f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Duke ruajtur..." : "Ruaj"}
+                  {isSubmitting
+                    ? "Duke ruajtur..."
+                    : editingProject
+                      ? "Përditëso"
+                      : "Ruaj"}
                 </button>
               </div>
             </form>
@@ -265,6 +332,13 @@ export default function PortfolioManagerPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenEdit(project)}
+                      className="inline-flex items-center gap-2 text-gray-400 hover:text-sky-400 transition-colors p-2 hover:bg-sky-500/10 rounded-lg"
+                      title="Edito projektin"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => handleTogglePublish(project)}
                       className="inline-flex items-center gap-2 text-gray-400 hover:text-[#cfa861] transition-colors p-2 hover:bg-[#cfa861]/10 rounded-lg"
