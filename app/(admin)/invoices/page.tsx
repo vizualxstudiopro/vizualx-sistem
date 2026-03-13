@@ -5,6 +5,12 @@ import { supabase } from "@/lib/supabase";
 import { Download, Share2, Trash2 } from "lucide-react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import {
+  defaultInvoicePdfSettings,
+  INVOICE_SETTINGS_PATH,
+  mergeInvoiceSettings,
+  type InvoicePdfSettings,
+} from "@/lib/invoicePdfSettings";
 
 interface Invoice {
   id: string;
@@ -26,48 +32,6 @@ interface ClientOption {
   id: string;
   name: string;
 }
-
-type InvoicePdfSettings = {
-  companyName: string;
-  companyTagline: string;
-  companyAddress: string;
-  companyPhone: string;
-  companyEmail: string;
-  companyWebsite: string;
-  companyNipt: string;
-  individualClientName: string;
-  clientCif: string;
-  personalSsn: string;
-  bankName: string;
-  bankBranch: string;
-  bankAccountTitle: string;
-  bankAccountNumber: string;
-  bankCurrency: string;
-  bankIban: string;
-  bankSwift: string;
-};
-
-const INVOICE_SETTINGS_PATH = "config/invoice-pdf-settings.json";
-
-const defaultInvoicePdfSettings: InvoicePdfSettings = {
-  companyName: "VizualX Studio",
-  companyTagline: "Digital Systems, Branding & Growth",
-  companyAddress: "Tirane, Shqiperi",
-  companyPhone: "+355 69 69 69 348",
-  companyEmail: "suport@vizualx.online",
-  companyWebsite: "https://www.vizualx.online",
-  companyNipt: "K00000000A",
-  individualClientName: "BESMIR GERMIZI",
-  clientCif: "419861856",
-  personalSsn: "I71020037K",
-  bankName: "BANKA KOMBETARE TREGTARE",
-  bankBranch: "BKT - DEGA KUKES",
-  bankAccountTitle: "BESMIR LUTFI GERMIZI",
-  bankAccountNumber: "419861856CLIDCLALLVB",
-  bankCurrency: "ALL",
-  bankIban: "AL1020555193861856CLIDCLALLV",
-  bankSwift: "NCBAALTX",
-};
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -91,20 +55,6 @@ function formatInvoiceDate(invoice: Invoice) {
     month: "short",
     day: "numeric",
   });
-}
-
-function mergeInvoiceSettings(raw: unknown): InvoicePdfSettings {
-  if (!raw || typeof raw !== "object") {
-    return defaultInvoicePdfSettings;
-  }
-
-  const parsed = raw as Partial<InvoicePdfSettings>;
-  return {
-    ...defaultInvoicePdfSettings,
-    ...Object.fromEntries(
-      Object.entries(parsed).filter(([, value]) => typeof value === "string")
-    ),
-  } as InvoicePdfSettings;
 }
 
 function getInvoiceNumber(invoice: Invoice) {
@@ -149,6 +99,7 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   });
 
   const pageWidth = 595;
+  const pageHeight = 842;
 
   doc.setFillColor(15, 17, 21);
   doc.rect(0, 0, pageWidth, 128, "F");
@@ -184,9 +135,9 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   doc.text(`Status: ${status}`, 440, 102);
 
   doc.setFillColor(252, 249, 242);
-  doc.roundedRect(36, 146, 252, 138, 10, 10, "F");
+  doc.roundedRect(36, 146, 252, 168, 10, 10, "F");
   doc.setFillColor(245, 247, 250);
-  doc.roundedRect(306, 146, 252, 138, 10, 10, "F");
+  doc.roundedRect(306, 146, 252, 168, 10, 10, "F");
 
   doc.setTextColor(145, 110, 48);
   doc.setFont("helvetica", "bold");
@@ -214,69 +165,69 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   doc.text(`SSN: ${settings.personalSsn}`, 322, 296);
 
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(36, 306, 522, 148, 10, 10, "F");
+  doc.roundedRect(36, 332, 522, 150, 10, 10, "F");
   doc.setDrawColor(229, 231, 235);
-  doc.roundedRect(36, 306, 522, 148, 10, 10, "S");
+  doc.roundedRect(36, 332, 522, 150, 10, 10, "S");
 
   doc.setFillColor(247, 248, 250);
-  doc.roundedRect(52, 324, 490, 34, 6, 6, "F");
+  doc.roundedRect(52, 350, 490, 34, 6, 6, "F");
   doc.setTextColor(107, 114, 128);
   doc.setFont("helvetica", "bold");
-  doc.text("Description", 62, 346);
-  doc.text("Amount", 500, 346, { align: "right" });
+  doc.text("Description", 62, 372);
+  doc.text("Amount", 500, 372, { align: "right" });
 
   doc.setTextColor(17, 24, 39);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(service, 62, 382);
+  doc.text(service, 62, 410);
   doc.setFont("helvetica", "bold");
-  doc.text(amount, 500, 382, { align: "right" });
+  doc.text(amount, 500, 410, { align: "right" });
 
   doc.setDrawColor(231, 231, 231);
-  doc.line(52, 398, 542, 398);
+  doc.line(52, 426, 542, 426);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(75, 85, 99);
-  doc.text("Subtotal", 430, 418);
-  doc.text(amount, 500, 418, { align: "right" });
-  doc.text("TVSH", 430, 436);
-  doc.text("EUR 0.00", 500, 436, { align: "right" });
+  doc.text("Subtotal", 430, 446);
+  doc.text(amount, 500, 446, { align: "right" });
+  doc.text("TVSH", 430, 464);
+  doc.text("EUR 0.00", 500, 464, { align: "right" });
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(145, 110, 48);
-  doc.text("Total", 430, 452);
-  doc.text(amount, 500, 452, { align: "right" });
+  doc.text("Total", 430, 480);
+  doc.text(amount, 500, 480, { align: "right" });
 
-  doc.addImage(qrDataUrl, "PNG", 52, 470, 88, 88);
+  doc.addImage(qrDataUrl, "PNG", 52, 515, 88, 88);
   doc.setTextColor(120, 120, 120);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Scan per verifikim fature", 52, 566);
+  doc.text("Scan per verifikim fature", 52, 612);
 
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(158, 470, 400, 124, 10, 10, "F");
+  doc.roundedRect(158, 515, 400, 124, 10, 10, "F");
   doc.setDrawColor(229, 231, 235);
-  doc.roundedRect(158, 470, 400, 124, 10, 10, "S");
+  doc.roundedRect(158, 515, 400, 124, 10, 10, "S");
   doc.setTextColor(145, 110, 48);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("KONFIRMIM I LLOGARISE BANKARE", 170, 490);
+  doc.text("KONFIRMIM I LLOGARISE BANKARE", 170, 536);
 
   doc.setTextColor(70, 70, 70);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.4);
-  doc.text(`Emri i Bankes: ${settings.bankName}`, 170, 508);
-  doc.text(`Dega: ${settings.bankBranch}`, 170, 521);
-  doc.text(`Emertimi i Llogarise: ${settings.bankAccountTitle}`, 170, 534);
-  doc.text(`Numri i Llogarise: ${settings.bankAccountNumber}`, 170, 547);
-  doc.text(`Monedha: ${settings.bankCurrency}`, 170, 560);
-  doc.text(`IBAN: ${settings.bankIban}`, 170, 573);
-  doc.text(`Swift Kodi: ${settings.bankSwift}`, 170, 586);
+  doc.text(`Emri i Bankes: ${settings.bankName}`, 170, 554);
+  doc.text(`Dega: ${settings.bankBranch}`, 170, 567);
+  doc.text(`Emertimi i Llogarise: ${settings.bankAccountTitle}`, 170, 580);
+  doc.text(`Numri i Llogarise: ${settings.bankAccountNumber}`, 170, 593);
+  doc.text(`Monedha: ${settings.bankCurrency}`, 170, 606);
+  doc.text(`IBAN: ${settings.bankIban}`, 170, 619);
+  doc.text(`Swift Kodi: ${settings.bankSwift}`, 170, 632);
 
   doc.setTextColor(125, 125, 125);
   doc.text(
     `Kjo fature eshte gjeneruar nga ${settings.companyName} | ${settings.companyWebsite}`,
     36,
-    805
+    pageHeight - 28
   );
 
   return doc;
@@ -286,7 +237,6 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [pdfSettings, setPdfSettings] = useState<InvoicePdfSettings>(defaultInvoicePdfSettings);
-  const [settingsSaving, setSettingsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -476,39 +426,6 @@ export default function InvoicesPage() {
     }
   }
 
-  function handleSettingsChange<K extends keyof InvoicePdfSettings>(
-    key: K,
-    value: InvoicePdfSettings[K]
-  ) {
-    setPdfSettings((current) => ({
-      ...current,
-      [key]: value,
-    }));
-  }
-
-  async function handleSaveInvoiceSettings() {
-    try {
-      setSettingsSaving(true);
-      const payload = JSON.stringify(pdfSettings, null, 2);
-      const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
-
-      const { error } = await supabase.storage
-        .from("website-images")
-        .upload(INVOICE_SETTINGS_PATH, blob, {
-          contentType: "application/json",
-          upsert: true,
-          cacheControl: "60",
-        });
-
-      if (error) throw error;
-      alert("Cilesimet e fatures u ruajten me sukses.");
-    } catch (error) {
-      alert(`Ruajtja deshtoi: ${getErrorMessage(error)}`);
-    } finally {
-      setSettingsSaving(false);
-    }
-  }
-
   async function handleDownloadPdf(invoice: Invoice) {
     const doc = await buildInvoicePdf(invoice, pdfSettings);
     doc.save(`fature-${invoice.id}.pdf`);
@@ -585,42 +502,6 @@ export default function InvoicesPage() {
           {invoiceEmailFeedback.message}
         </div>
       ) : null}
-
-      <div className="mb-6 rounded-2xl border border-white/10 bg-[#151820] p-5 md:p-6">
-        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-white">Cilesimet e Templates se Fatures</h2>
-            <p className="text-xs text-gray-400">Te dhenat qe perdoren ne PDF (kompani, klient individ dhe banka).</p>
-          </div>
-          <button
-            onClick={handleSaveInvoiceSettings}
-            disabled={settingsSaving}
-            className="rounded-lg bg-[#cfa861] px-4 py-2 text-sm font-bold text-[#0f1115] transition-colors hover:bg-[#e8c96f] disabled:opacity-60"
-          >
-            {settingsSaving ? "Duke ruajtur..." : "Ruaj Cilesimet"}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <input value={pdfSettings.companyName} onChange={(e) => handleSettingsChange("companyName", e.target.value)} placeholder="Emri i kompanise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyTagline} onChange={(e) => handleSettingsChange("companyTagline", e.target.value)} placeholder="Tagline" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyAddress} onChange={(e) => handleSettingsChange("companyAddress", e.target.value)} placeholder="Adresa" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyPhone} onChange={(e) => handleSettingsChange("companyPhone", e.target.value)} placeholder="Telefoni" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyEmail} onChange={(e) => handleSettingsChange("companyEmail", e.target.value)} placeholder="Email" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyWebsite} onChange={(e) => handleSettingsChange("companyWebsite", e.target.value)} placeholder="Website" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.companyNipt} onChange={(e) => handleSettingsChange("companyNipt", e.target.value)} placeholder="NIPT" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.individualClientName} onChange={(e) => handleSettingsChange("individualClientName", e.target.value)} placeholder="Emri i Klientit Individ" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.clientCif} onChange={(e) => handleSettingsChange("clientCif", e.target.value)} placeholder="Numri i Klientit (CIF)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.personalSsn} onChange={(e) => handleSettingsChange("personalSsn", e.target.value)} placeholder="Numri Personal (SSN)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankName} onChange={(e) => handleSettingsChange("bankName", e.target.value)} placeholder="Emri i Bankes" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankBranch} onChange={(e) => handleSettingsChange("bankBranch", e.target.value)} placeholder="Dega" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankAccountTitle} onChange={(e) => handleSettingsChange("bankAccountTitle", e.target.value)} placeholder="Emertimi i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankAccountNumber} onChange={(e) => handleSettingsChange("bankAccountNumber", e.target.value)} placeholder="Numri i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankCurrency} onChange={(e) => handleSettingsChange("bankCurrency", e.target.value)} placeholder="Monedha" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankIban} onChange={(e) => handleSettingsChange("bankIban", e.target.value)} placeholder="IBAN" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-          <input value={pdfSettings.bankSwift} onChange={(e) => handleSettingsChange("bankSwift", e.target.value)} placeholder="Swift Kodi" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
-        </div>
-      </div>
 
       {/* Table */}
       <div className="mb-3 text-xs text-gray-500 md:hidden">Rrëshqit horizontalisht për të parë të gjitha kolonat dhe opsionet.</div>

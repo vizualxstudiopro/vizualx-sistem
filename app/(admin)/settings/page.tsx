@@ -7,6 +7,13 @@ import {
   logoutAllDevices,
   updateSystemSettings,
 } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import {
+  defaultInvoicePdfSettings,
+  INVOICE_SETTINGS_PATH,
+  mergeInvoiceSettings,
+  type InvoicePdfSettings,
+} from "@/lib/invoicePdfSettings";
 
 type SystemSettings = {
   primary_color: string;
@@ -20,17 +27,35 @@ const defaultSettings: SystemSettings = {
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoicePdfSettings>(defaultInvoicePdfSettings);
+  const [invoiceSaving, setInvoiceSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
       const data = await getSystemSettings();
       setSettings(data);
+      await loadInvoiceSettings();
       setLoading(false);
     }
 
     loadSettings();
   }, []);
+
+  async function loadInvoiceSettings() {
+    try {
+      const { data } = supabase.storage
+        .from("website-images")
+        .getPublicUrl(INVOICE_SETTINGS_PATH);
+
+      const response = await fetch(`${data.publicUrl}?t=${Date.now()}`);
+      if (!response.ok) return;
+
+      const json = (await response.json()) as unknown;
+      setInvoiceSettings(mergeInvoiceSettings(json));
+    } catch {
+    }
+  }
 
   useEffect(() => {
     document.documentElement.style.setProperty("--primary-color", settings.primary_color);
@@ -56,6 +81,36 @@ export default function SettingsPage() {
   const handleLogoutAll = async () => {
     await logoutAllDevices();
     alert("U loguat nga te gjitha pajisjet.");
+  };
+
+  const handleInvoiceSettingsChange = <K extends keyof InvoicePdfSettings>(
+    key: K,
+    value: InvoicePdfSettings[K]
+  ) => {
+    setInvoiceSettings((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleSaveInvoiceSettings = async () => {
+    try {
+      setInvoiceSaving(true);
+      const payload = JSON.stringify(invoiceSettings, null, 2);
+      const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+
+      const { error } = await supabase.storage
+        .from("website-images")
+        .upload(INVOICE_SETTINGS_PATH, blob, {
+          upsert: true,
+          contentType: "application/json",
+          cacheControl: "60",
+        });
+
+      if (error) throw error;
+      alert("Cilesimet e templates se fatures u ruajten.");
+    } catch {
+      alert("Ruajtja e cilesimeve deshtoi.");
+    } finally {
+      setInvoiceSaving(false);
+    }
   };
 
   if (loading) {
@@ -95,6 +150,42 @@ export default function SettingsPage() {
         <button onClick={handleLogoutAll} className="rounded-lg bg-white/10 px-4 py-2 font-semibold text-white transition-all hover:bg-white/20">
           Dil nga te gjitha pajisjet
         </button>
+      </section>
+
+      <section className="rounded-2xl border border-white/5 bg-[#1a1c23] p-6">
+        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white">Template e Fatures (PDF)</h2>
+            <p className="text-xs text-gray-400">Ketu menaxhohen te dhenat e kompanise, klientit individ dhe bankes.</p>
+          </div>
+          <button
+            onClick={handleSaveInvoiceSettings}
+            disabled={invoiceSaving}
+            className="rounded-lg bg-[#cfa861] px-4 py-2 font-semibold text-[#0f1115] transition-all hover:opacity-90 disabled:opacity-60"
+          >
+            {invoiceSaving ? "Duke ruajtur..." : "Ruaj Cilesimet"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <input value={invoiceSettings.companyName} onChange={(e) => handleInvoiceSettingsChange("companyName", e.target.value)} placeholder="Emri i kompanise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyTagline} onChange={(e) => handleInvoiceSettingsChange("companyTagline", e.target.value)} placeholder="Tagline" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyAddress} onChange={(e) => handleInvoiceSettingsChange("companyAddress", e.target.value)} placeholder="Adresa" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyPhone} onChange={(e) => handleInvoiceSettingsChange("companyPhone", e.target.value)} placeholder="Telefoni" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyEmail} onChange={(e) => handleInvoiceSettingsChange("companyEmail", e.target.value)} placeholder="Email" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyWebsite} onChange={(e) => handleInvoiceSettingsChange("companyWebsite", e.target.value)} placeholder="Website" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.companyNipt} onChange={(e) => handleInvoiceSettingsChange("companyNipt", e.target.value)} placeholder="NIPT" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.individualClientName} onChange={(e) => handleInvoiceSettingsChange("individualClientName", e.target.value)} placeholder="Emri i Klientit Individ" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.clientCif} onChange={(e) => handleInvoiceSettingsChange("clientCif", e.target.value)} placeholder="Numri i Klientit (CIF)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.personalSsn} onChange={(e) => handleInvoiceSettingsChange("personalSsn", e.target.value)} placeholder="Numri Personal (SSN)" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankName} onChange={(e) => handleInvoiceSettingsChange("bankName", e.target.value)} placeholder="Emri i Bankes" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankBranch} onChange={(e) => handleInvoiceSettingsChange("bankBranch", e.target.value)} placeholder="Dega" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankAccountTitle} onChange={(e) => handleInvoiceSettingsChange("bankAccountTitle", e.target.value)} placeholder="Emertimi i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankAccountNumber} onChange={(e) => handleInvoiceSettingsChange("bankAccountNumber", e.target.value)} placeholder="Numri i Llogarise" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankCurrency} onChange={(e) => handleInvoiceSettingsChange("bankCurrency", e.target.value)} placeholder="Monedha" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankIban} onChange={(e) => handleInvoiceSettingsChange("bankIban", e.target.value)} placeholder="IBAN" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+          <input value={invoiceSettings.bankSwift} onChange={(e) => handleInvoiceSettingsChange("bankSwift", e.target.value)} placeholder="Swift Kodi" className="rounded-lg border border-white/10 bg-[#0f1115] px-3 py-2 text-sm text-white" />
+        </div>
       </section>
     </div>
   );
