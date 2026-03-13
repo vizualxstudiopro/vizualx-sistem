@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 const images = [
   { src: '/portfolio/project-13.png', alt: 'VizualX Project 1' },
@@ -29,8 +31,42 @@ const images = [
   { src: '/portfolio/project-35.png', alt: 'VizualX Project 22' },
 ];
 
+type MediaAssetRow = {
+  file_url: string | null;
+  project_name: string | null;
+};
+
 export default function PortfolioPage() {
   const [selected, setSelected] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState(images);
+
+  useEffect(() => {
+    const fetchPublishedPortfolio = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('media_assets')
+          .select('file_url, project_name')
+          .eq('category', 'portfolio')
+          .order('created_at', { ascending: false });
+
+        if (error) return;
+
+        const mapped = ((data as MediaAssetRow[] | null) || [])
+          .filter((item) => !!item.file_url)
+          .map((item, index) => ({
+            src: item.file_url as string,
+            alt: item.project_name || `VizualX Project ${index + 1}`,
+          }));
+
+        if (mapped.length > 0) {
+          setGalleryImages(mapped);
+        }
+      } catch {
+      }
+    };
+
+    fetchPublishedPortfolio();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0f1115]">
@@ -65,7 +101,7 @@ export default function PortfolioPage() {
             visible: { transition: { staggerChildren: 0.06 } },
           }}
         >
-          {images.map((img) => (
+          {galleryImages.map((img) => (
             <motion.div
               key={img.src}
               className="group cursor-pointer overflow-hidden rounded-xl border border-white/5 hover:border-[#cfa861]/40 transition-all duration-300"
@@ -77,11 +113,13 @@ export default function PortfolioPage() {
               onClick={() => setSelected(img.src)}
             >
               <div className="relative aspect-[4/3] overflow-hidden">
-                <img
+                <Image
                   src={img.src}
                   alt={img.alt}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  priority={false}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
               </div>

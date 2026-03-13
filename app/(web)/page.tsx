@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Code, Palette, Smartphone, Phone, Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 
 type ContactStatus = {
   kind: 'success' | 'error';
@@ -24,6 +25,10 @@ type PortfolioProjectRow = {
   category: string | null;
   image_url: string | null;
   client_name: string | null;
+};
+
+type MediaAssetRow = {
+  file_url: string | null;
 };
 
 function getErrorMessage(error: unknown) {
@@ -103,8 +108,35 @@ const services = [
   },
 ];
 
+const fallbackHeroSlides = [
+  '/portfolio/project-13.png',
+  '/portfolio/project-14.png',
+  '/portfolio/project-15.png',
+  '/portfolio/project-16.png',
+  '/portfolio/project-17.png',
+  '/portfolio/project-18.png',
+  '/portfolio/project-19.png',
+  '/portfolio/project-20.png',
+  '/portfolio/project-21.png',
+  '/portfolio/project-22.png',
+  '/portfolio/project-23.png',
+  '/portfolio/project-24.png',
+  '/portfolio/project-25.png',
+  '/portfolio/project-26.png',
+  '/portfolio/project-27.png',
+  '/portfolio/project-28.png',
+  '/portfolio/project-29.png',
+  '/portfolio/project-30.png',
+  '/portfolio/project-31.png',
+  '/portfolio/project-32.png',
+  '/portfolio/project-33.png',
+  '/portfolio/project-35.png',
+];
+
 export default function Home() {
   const [projects, setProjects] = useState<PortfolioProject[]>(defaultProjects);
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [heroSlides, setHeroSlides] = useState<string[]>(fallbackHeroSlides);
   const [isContactSubmitting, setIsContactSubmitting] = useState(false);
   const [contactStatus, setContactStatus] = useState<ContactStatus>(null);
   const [contactForm, setContactForm] = useState({
@@ -132,6 +164,42 @@ export default function Home() {
     };
 
     fetchWebConfig();
+  }, []);
+
+  useEffect(() => {
+    if (heroSlides.length === 0) return;
+
+    const timer = setInterval(() => {
+      setHeroImageIndex((current) => (current + 1) % heroSlides.length);
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, [heroSlides.length]);
+
+  useEffect(() => {
+    const fetchHeroSlides = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('media_assets')
+          .select('file_url')
+          .eq('category', 'hero')
+          .order('created_at', { ascending: false });
+
+        if (error) return;
+
+        const publishedSlides = ((data as MediaAssetRow[] | null) || [])
+          .map((item) => item.file_url)
+          .filter((url): url is string => typeof url === 'string' && url.length > 0);
+
+        if (publishedSlides.length > 0) {
+          setHeroSlides(publishedSlides);
+          setHeroImageIndex(0);
+        }
+      } catch {
+      }
+    };
+
+    fetchHeroSlides();
   }, []);
 
   useEffect(() => {
@@ -219,11 +287,24 @@ export default function Home() {
       <section className="relative overflow-hidden">
         {/* Hero Background Image */}
         <div className="absolute inset-0">
-          <img
-            src="/portfolio/project-13.png"
-            alt="VizualX Hero"
-            className="w-full h-full object-cover"
-          />
+          {heroSlides.map((slide, index) => (
+            <motion.div
+              key={slide}
+              className="absolute inset-0"
+              initial={false}
+              animate={{ opacity: index === heroImageIndex ? 1 : 0 }}
+              transition={{ duration: 0.9, ease: 'easeInOut' }}
+            >
+              <Image
+                src={slide}
+                alt="VizualX Hero"
+                fill
+                sizes="100vw"
+                className="object-cover"
+                priority={index === 0}
+              />
+            </motion.div>
+          ))}
           <div className="absolute inset-0 bg-black/70" />
           <div className="absolute inset-0 bg-gradient-to-b from-[#0f1115]/80 via-transparent to-[#0f1115]" />
         </div>
