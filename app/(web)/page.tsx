@@ -216,7 +216,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0f1115] text-white">
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+      <section className="relative overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0">
+          <img
+            src="/portfolio/project-13.png"
+            alt="VizualX Hero"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f1115]/80 via-transparent to-[#0f1115]" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 md:py-40">
         <motion.div
           className="space-y-8"
           initial="initial"
@@ -261,6 +272,7 @@ export default function Home() {
             </Link>
           </motion.div>
         </motion.div>
+        </div>
       </section>
 
       {/* Services Section */}
