@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Menu, RefreshCw, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -24,6 +24,12 @@ export default function Sidebar() {
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  function handleAppRefresh() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("_r", Date.now().toString());
+    window.location.replace(url.toString());
+  }
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -219,6 +225,16 @@ export default function Sidebar() {
               </div>
             ) : null}
           </div>
+
+          <button
+            type="button"
+            onClick={handleAppRefresh}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all hover:border-[#cfa861]/40 hover:text-white"
+            aria-label="Rifresko aplikacionin"
+            title="Rifresko aplikacionin"
+          >
+            <RefreshCw className="h-4 w-4 md:h-5 md:w-5" />
+          </button>
 
           {/* Close button on mobile */}
           <button

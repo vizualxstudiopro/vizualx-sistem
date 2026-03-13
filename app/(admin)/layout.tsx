@@ -1,6 +1,5 @@
 import Sidebar from "@/components/Sidebar";
 import AndroidInstallPrompt from "@/components/AndroidInstallPrompt";
-import AndroidQuickRefresh from "@/components/AndroidQuickRefresh";
 
 export default function AdminLayout({
   children,
@@ -14,7 +13,6 @@ export default function AdminLayout({
         {children}
       </main>
       <AndroidInstallPrompt />
-      <AndroidQuickRefresh />
     </div>
   );
 }

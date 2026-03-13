@@ -69,7 +69,7 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   const clientCompany = invoice.clients?.[0]?.company || "-";
   const clientPhone = invoice.clients?.[0]?.phone || "-";
   const amountNumber = Number(invoice.amount || 0);
-  const amount = `EUR ${amountNumber.toFixed(2)}`;
+  const amount = `${amountNumber.toFixed(2)} ALL`;
   const status = invoice.status === "paid" ? "E Paguar" : "Pa Paguar";
   const date = formatInvoiceDate(invoice);
   const service = invoice.service || "-";
@@ -99,135 +99,138 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   });
 
   const pageWidth = 595;
-  const pageHeight = 842;
+  const right = pageWidth - 36;
 
-  doc.setFillColor(15, 17, 21);
-  doc.rect(0, 0, pageWidth, 128, "F");
-
-  doc.setFillColor(197, 160, 89);
-  doc.roundedRect(36, 30, 58, 58, 10, 10, "F");
-  doc.setDrawColor(15, 17, 21);
-  doc.setLineWidth(4);
-  doc.line(50, 44, 65, 59);
-  doc.line(50, 74, 65, 59);
-  doc.line(80, 44, 65, 59);
-  doc.line(80, 74, 65, 59);
-
-  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(24);
-  doc.text("VIZUALX", 110, 55);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(28);
+  doc.text("VIZUALX", 40, 60);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(214, 214, 214);
-  doc.text(settings.companyTagline, 110, 74);
+  doc.setFontSize(9.5);
+  doc.text(settings.companyTagline, 40, 75);
 
-  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text("INVOICE", 440, 48);
-  doc.setTextColor(197, 160, 89);
-  doc.setFontSize(11);
-  doc.text(invoiceNo, 440, 68);
-  doc.setTextColor(220, 220, 220);
+  doc.setFontSize(14);
+  doc.text(settings.companyName.toUpperCase(), right, 48, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.text(`Date: ${date}`, 440, 86);
-  doc.text(`Status: ${status}`, 440, 102);
+  doc.setFontSize(10);
+  doc.text(settings.companyAddress, right, 65, { align: "right" });
+  doc.text(settings.companyPhone, right, 80, { align: "right" });
+  doc.text(settings.companyEmail, right, 95, { align: "right" });
+  doc.text(settings.companyWebsite, right, 110, { align: "right" });
 
-  doc.setFillColor(252, 249, 242);
-  doc.roundedRect(36, 146, 252, 168, 10, 10, "F");
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(306, 146, 252, 168, 10, 10, "F");
-
-  doc.setTextColor(145, 110, 48);
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(34);
+  doc.text("FATURE", 40, 165);
   doc.setFontSize(12);
-  doc.text("From", 52, 170);
-  doc.text("Bill To", 322, 170);
+  doc.text(`Numri i fatures:`, 320, 154);
+  doc.text(`Data e fatures:`, 320, 178);
+  doc.setFont("helvetica", "bold");
+  doc.text(invoiceNo, 420, 154);
+  doc.text(date, 420, 178);
 
-  doc.setTextColor(17, 24, 39);
+  doc.setDrawColor(20, 20, 20);
+  doc.setLineWidth(0.8);
+  doc.line(36, 192, right, 192);
+
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text(settings.companyName, 52, 192);
-  doc.text(clientName, 322, 192);
+  doc.text("FATURUAR PER:", 40, 226);
+  doc.text("TE DHENAT E FATURIMIT", 320, 226);
 
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const leftInfo = [
+    `Emri: ${clientName}`,
+    `ID/CIF: ${settings.clientCif}`,
+    `Adresa: ${clientCompany || "-"}`,
+    `Telefoni: ${clientPhone || "-"}`,
+    `Email: ${clientEmail || "-"}`,
+  ];
+  const rightInfo = [
+    `Sherbimi: ${service}`,
+    `Statusi: ${status}`,
+    `Numri Personal: ${settings.personalSsn}`,
+    `Individi: ${settings.individualClientName}`,
+    `NIPT Kompanie: ${settings.companyNipt}`,
+  ];
+
+  let yLeft = 248;
+  leftInfo.forEach((line) => {
+    doc.text(line, 40, yLeft);
+    yLeft += 22;
+  });
+
+  let yRight = 248;
+  rightInfo.forEach((line) => {
+    doc.text(line, 320, yRight);
+    yRight += 22;
+  });
+
+  const tableTop = 390;
+  doc.setLineWidth(0.7);
+  doc.rect(36, tableTop, 523, 32);
+  doc.line(430, tableTop, 430, tableTop + 32);
+  doc.line(485, tableTop, 485, tableTop + 32);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Pershkrimi", 233, tableTop + 21, { align: "center" });
+  doc.text("Sasia", 457, tableTop + 21, { align: "center" });
+  doc.text("Shuma", 522, tableTop + 21, { align: "center" });
+
+  const rowTop = tableTop + 32;
+  doc.rect(36, rowTop, 523, 28);
+  doc.line(430, rowTop, 430, rowTop + 28);
+  doc.line(485, rowTop, 485, rowTop + 28);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
-  doc.text(settings.companyAddress, 52, 211);
-  doc.text(`Phone: ${settings.companyPhone}`, 52, 228);
-  doc.text(`Email: ${settings.companyEmail}`, 52, 245);
-  doc.text(`NIPT: ${settings.companyNipt}`, 52, 262);
+  doc.text(`Servis: ${service}`, 42, rowTop + 19);
+  doc.text("1.0", 457, rowTop + 19, { align: "center" });
+  doc.text(amount, 550, rowTop + 19, { align: "right" });
 
-  doc.text(`Company: ${clientCompany}`, 322, 211);
-  doc.text(`Phone: ${clientPhone}`, 322, 228);
-  doc.text(`Email: ${clientEmail}`, 322, 245);
-  doc.text(`Individ: ${settings.individualClientName}`, 322, 262);
-  doc.text(`CIF: ${settings.clientCif}`, 322, 279);
-  doc.text(`SSN: ${settings.personalSsn}`, 322, 296);
-
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(36, 332, 522, 150, 10, 10, "F");
-  doc.setDrawColor(229, 231, 235);
-  doc.roundedRect(36, 332, 522, 150, 10, 10, "S");
-
-  doc.setFillColor(247, 248, 250);
-  doc.roundedRect(52, 350, 490, 34, 6, 6, "F");
-  doc.setTextColor(107, 114, 128);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.text("Nentotali:", 470, 485, { align: "right" });
+  doc.text(amount, 550, 485, { align: "right" });
+  doc.text("TVSH (0%):", 470, 510, { align: "right" });
+  doc.text("0.00 ALL", 550, 510, { align: "right" });
   doc.setFont("helvetica", "bold");
-  doc.text("Description", 62, 372);
-  doc.text("Amount", 500, 372, { align: "right" });
+  doc.setFontSize(14);
+  doc.text("TOTAL:", 470, 538, { align: "right" });
+  doc.text(amount, 550, 538, { align: "right" });
 
-  doc.setTextColor(17, 24, 39);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(service, 62, 410);
-  doc.setFont("helvetica", "bold");
-  doc.text(amount, 500, 410, { align: "right" });
+  doc.text("Faleminderit qe zgjodhet sherbimet tona.", 40, 590);
 
-  doc.setDrawColor(231, 231, 231);
-  doc.line(52, 426, 542, 426);
+  doc.setFont("helvetica", "bold");
+  doc.text("Kushtet e Pageses", 40, 626);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(75, 85, 99);
-  doc.text("Subtotal", 430, 446);
-  doc.text(amount, 500, 446, { align: "right" });
-  doc.text("TVSH", 430, 464);
-  doc.text("EUR 0.00", 500, 464, { align: "right" });
-
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(145, 110, 48);
-  doc.text("Total", 430, 480);
-  doc.text(amount, 500, 480, { align: "right" });
-
-  doc.addImage(qrDataUrl, "PNG", 52, 515, 88, 88);
-  doc.setTextColor(120, 120, 120);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text("Scan per verifikim fature", 52, 612);
-
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(158, 515, 400, 124, 10, 10, "F");
-  doc.setDrawColor(229, 231, 235);
-  doc.roundedRect(158, 515, 400, 124, 10, 10, "S");
-  doc.setTextColor(145, 110, 48);
-  doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("KONFIRMIM I LLOGARISE BANKARE", 170, 536);
+  doc.text("Pagesa duhet te behet brenda 3 diteve nga data e fatures.", 40, 644);
+  doc.text("Ju lutem kryeni pagesen ne llogarine e meposhtme:", 40, 660);
+  doc.text(`Banka: ${settings.bankName}`, 40, 682);
+  doc.text(`BIC (SWIFT): ${settings.bankSwift}`, 40, 698);
+  doc.text(`Emri i llogarise: ${settings.bankAccountTitle}`, 40, 714);
+  doc.text(`IBAN: ${settings.bankIban}`, 40, 730);
 
-  doc.setTextColor(70, 70, 70);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.4);
-  doc.text(`Emri i Bankes: ${settings.bankName}`, 170, 554);
-  doc.text(`Dega: ${settings.bankBranch}`, 170, 567);
-  doc.text(`Emertimi i Llogarise: ${settings.bankAccountTitle}`, 170, 580);
-  doc.text(`Numri i Llogarise: ${settings.bankAccountNumber}`, 170, 593);
-  doc.text(`Monedha: ${settings.bankCurrency}`, 170, 606);
-  doc.text(`IBAN: ${settings.bankIban}`, 170, 619);
-  doc.text(`Swift Kodi: ${settings.bankSwift}`, 170, 632);
+  doc.setFont("helvetica", "bold");
+  doc.text("Shenim!", 320, 626);
+  doc.setFont("helvetica", "italic");
+  doc.text("Per cdo pyetje ose sqarim ne lidhje me kete fature,", 320, 644);
+  doc.text(`ju lutem na kontaktoni ne: ${settings.companyEmail}`, 320, 660);
 
-  doc.setTextColor(125, 125, 125);
+  doc.line(36, 752, right, 752);
+  doc.addImage(qrDataUrl, "PNG", 46, 764, 80, 80);
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(8.5);
   doc.text(
-    `Kjo fature eshte gjeneruar nga ${settings.companyName} | ${settings.companyWebsite}`,
-    36,
-    pageHeight - 28
+    "Ky dokument eshte gjeneruar me ane te nje procedure automatike nga nje sistem elektronik.",
+    pageWidth / 2,
+    835,
+    { align: "center" }
   );
 
   return doc;
