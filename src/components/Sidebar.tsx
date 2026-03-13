@@ -250,6 +250,17 @@ export default function Sidebar() {
 
       {/* Lidhjet e Menusë */}
       <nav className="flex-1 min-h-0 overflow-y-auto px-3 md:px-4 py-4 md:py-8 space-y-1 md:space-y-2">
+        <button
+          type="button"
+          onClick={handleAppRefresh}
+          className="mb-2 flex w-full items-center gap-3 rounded-lg border border-[#cfa861]/25 bg-[#cfa861]/10 px-3 md:px-4 py-2.5 md:py-3 text-left text-sm md:text-base font-semibold text-[#e0bf84] transition-all duration-200 hover:border-[#cfa861]/40 hover:bg-[#cfa861]/15"
+          aria-label="Rifresko panelin"
+          title="Rifresko panelin"
+        >
+          <RefreshCw className="h-5 w-5" />
+          Rifresko Panelin
+        </button>
+
         {menuItems.map((item) => {
           const isActive = pathname === item.path;
           
