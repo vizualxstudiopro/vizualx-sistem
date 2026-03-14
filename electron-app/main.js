@@ -49,19 +49,25 @@ function createMain() {
     show: false,
     title: 'VizualX Panel',
     icon: iconPath,
-    frame: false,
+    frame: true,
+    autoHideMenuBar: true,
     backgroundColor: '#0f1115',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      webviewTag: true,          // enables <webview> in shell.html
       devTools: !app.isPackaged,
     },
   });
 
   Menu.setApplicationMenu(null);
-  mainWindow.loadFile(path.join(__dirname, 'shell.html'));
+  mainWindow.loadURL(`${PANEL_URL}/dashboard?desktop=1`);
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    try {
+      mainWindow?.webContents.setZoomFactor(1);
+      mainWindow?.webContents.setVisualZoomLevelLimits(1, 1);
+    } catch {}
+  });
 
   mainWindow.once('ready-to-show', () => {
     const delay = splashWindow && !splashWindow.isDestroyed() ? 2500 : 0;
@@ -81,13 +87,6 @@ function createMain() {
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });
-
-  mainWindow.on('maximize', () =>
-    mainWindow.webContents.send('window-state', 'maximized')
-  );
-  mainWindow.on('unmaximize', () =>
-    mainWindow.webContents.send('window-state', 'normal')
-  );
 }
 
 // ─── System Tray ──────────────────────────────────────────────────────────────
@@ -112,6 +111,7 @@ function createTray() {
     { label: 'Klientët',     click: () => navigateTray('/clients') },
     { label: 'Faturat',      click: () => navigateTray('/invoices') },
     { label: 'Projektet',    click: () => navigateTray('/projects') },
+    { label: 'Sinkronizo',   click: () => mainWindow?.webContents.reloadIgnoringCache() },
     { type: 'separator' },
     { label: 'Dil', click: () => { isQuitting = true; app.quit(); } },
   ]);
@@ -126,24 +126,10 @@ function showMain() {
 
 function navigateTray(p) {
   showMain();
-  mainWindow?.webContents.send('navigate-to', p);
+  mainWindow?.loadURL(`${PANEL_URL}${p}?desktop=1`);
 }
 
 // ─── IPC Handlers ─────────────────────────────────────────────────────────────
-ipcMain.on('window-minimize', () => mainWindow?.minimize());
-ipcMain.on('window-maximize', () => {
-  if (mainWindow?.isMaximized()) mainWindow.unmaximize();
-  else mainWindow?.maximize();
-});
-ipcMain.on('window-close', () => {
-  if (tray) mainWindow?.hide();
-  else mainWindow?.close();
-});
-// Sync: tell shell.html to reload the webview
-ipcMain.on('sync-panel', () => {
-  mainWindow?.webContents.send('do-sync', Date.now());
-});
-// Dev tools shortcut (Ctrl+Shift+I)
 ipcMain.on('open-devtools', () => mainWindow?.webContents.openDevTools());
 
 // ─── App Ready ────────────────────────────────────────────────────────────────
