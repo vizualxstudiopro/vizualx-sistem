@@ -293,13 +293,38 @@ export default function AssetsPage() {
     [activeTab, assets]
   );
 
+  const heroPublished = assets.filter(a => a.category === 'hero').length;
+  const heroDraft = assets.filter(a => a.category === 'hero_draft').length;
+  const portfolioPublished = assets.filter(a => a.category === 'portfolio').length;
+  const portfolioDraft = assets.filter(a => a.category === 'portfolio_draft').length;
+
   return (
     <div className="p-4 md:p-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-extrabold text-white">Media për Web</h1>
         <p className="text-gray-400 text-sm mt-1">
           Multi-upload, publikim/çpublikim dhe renditje Hero direkt nga paneli.
         </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#1a1c23] border border-white/5 rounded-xl p-4">
+          <p className="text-xs text-gray-500 mb-1">Hero Live</p>
+          <p className="text-2xl font-bold text-white">{heroPublished}</p>
+        </div>
+        <div className="bg-[#1a1c23] border border-white/5 rounded-xl p-4">
+          <p className="text-xs text-gray-500 mb-1">Hero Draft</p>
+          <p className="text-2xl font-bold text-gray-400">{heroDraft}</p>
+        </div>
+        <div className="bg-[#1a1c23] border border-white/5 rounded-xl p-4">
+          <p className="text-xs text-gray-500 mb-1">Portofoli Live</p>
+          <p className="text-2xl font-bold text-white">{portfolioPublished}</p>
+        </div>
+        <div className="bg-[#1a1c23] border border-white/5 rounded-xl p-4">
+          <p className="text-xs text-gray-500 mb-1">Portofoli Draft</p>
+          <p className="text-2xl font-bold text-gray-400">{portfolioDraft}</p>
+        </div>
       </div>
 
       <div className="bg-[#1a1c23] border border-white/5 rounded-2xl p-6 md:p-8 mb-8">
@@ -446,23 +471,29 @@ export default function AssetsPage() {
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("hero")}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-colors ${
             activeTab === "hero"
               ? "bg-[#cfa861] text-[#0f1115]"
               : "bg-white/5 text-gray-300 hover:bg-white/10"
           }`}
         >
           Hero
+          <span className={`text-xs px-1.5 py-0.5 rounded-md ${
+            activeTab === 'hero' ? 'bg-black/20 text-[#0f1115]' : 'bg-white/10 text-gray-400'
+          }`}>{heroPublished + heroDraft}</span>
         </button>
         <button
           onClick={() => setActiveTab("portfolio")}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-colors ${
             activeTab === "portfolio"
               ? "bg-[#cfa861] text-[#0f1115]"
               : "bg-white/5 text-gray-300 hover:bg-white/10"
           }`}
         >
           Portfolio
+          <span className={`text-xs px-1.5 py-0.5 rounded-md ${
+            activeTab === 'portfolio' ? 'bg-black/20 text-[#0f1115]' : 'bg-white/10 text-gray-400'
+          }`}>{portfolioPublished + portfolioDraft}</span>
         </button>
       </div>
 

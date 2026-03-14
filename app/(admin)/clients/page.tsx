@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { User, Mail, Phone, Trash2, Plus } from "lucide-react";
+import { User, Mail, Phone, Trash2, Plus, FileText } from "lucide-react";
 
 interface Client {
   id: string;
@@ -15,6 +15,7 @@ interface Client {
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [invoiceCounts, setInvoiceCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +41,16 @@ export default function ClientsPage() {
 
       if (error) throw error;
       setClients(data || []);
+
+      // Fetch invoice counts per client
+      const { data: invData } = await supabase.from("invoices").select("client_id, status");
+      if (invData) {
+        const counts: Record<string, number> = {};
+        invData.forEach((inv: { client_id: string; status: string }) => {
+          if (inv.client_id) counts[inv.client_id] = (counts[inv.client_id] || 0) + 1;
+        });
+        setInvoiceCounts(counts);
+      }
     } catch {
     } finally {
       setLoading(false);
@@ -236,7 +247,7 @@ export default function ClientsPage() {
               </div>
 
               {/* Contact Info */}
-              <div className="space-y-3 mb-6 pb-6 border-b border-white/5">
+              <div className="space-y-3 mb-4 pb-4 border-b border-white/5">
                 {/* Mail */}
                 <a
                   href={`mailto:${client.email}`}
@@ -246,7 +257,6 @@ export default function ClientsPage() {
                   <span className="text-sm truncate">{client.email}</span>
                 </a>
 
-                {/* Phone */}
                 {client.phone && (
                   <a
                     href={`tel:${client.phone}`}
@@ -256,6 +266,14 @@ export default function ClientsPage() {
                     <span className="text-sm">{client.phone}</span>
                   </a>
                 )}
+              </div>
+
+              {/* Invoice count */}
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-4 h-4 text-[#cfa861]" />
+                <span className="text-sm text-gray-400">
+                  {invoiceCounts[client.id] ?? 0} fatura
+                </span>
               </div>
 
               {/* Delete Button */}

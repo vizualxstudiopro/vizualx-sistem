@@ -75,18 +75,14 @@ export default function Dashboard() {
     unpaidInvoices: 0,
     totalRevenue: 0
   });
+  const [chartData, setChartData] = useState([
+    { name: 'Jan', fitimi: 0 }, { name: 'Shk', fitimi: 0 }, { name: 'Mar', fitimi: 0 },
+    { name: 'Pri', fitimi: 0 }, { name: 'Maj', fitimi: 0 }, { name: 'Qer', fitimi: 0 },
+  ]);
+  const [performanceStats, setPerformanceStats] = useState({ paymentRate: 0, projectCompletion: 0, activeClientRate: 0, portfolioPublished: 0 });
   const [recentClients, setRecentClients] = useState<ClientSummary[]>([]);
   const [recentInvoices, setRecentInvoices] = useState<InvoiceSummary[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const chartData = [
-    { name: 'Jan', fitimi: 0 },
-    { name: 'Feb', fitimi: 0 },
-    { name: 'Mar', fitimi: 0 },
-    { name: 'Apr', fitimi: 0 },
-    { name: 'Maj', fitimi: 0 },
-    { name: 'Qer', fitimi: 0 },
-  ];
 
   const activityLog: ActivityLogItem[] = [];
   const upcomingTasks: UpcomingTask[] = [];
@@ -97,31 +93,61 @@ export default function Dashboard() {
     async function getDashboardData() {
       setLoading(true);
       try {
-        // Statistika
-        const { count: clientCount } = await supabase.from('clients').select('*', { count: 'exact', head: true });
-        const { data: invoiceData } = await supabase.from('invoices').select('amount, status');
-        const { count: activeProjectCount } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .neq('status', 'done');
-        const unpaid = invoiceData?.filter(i => i.status === 'unpaid').length || 0;
-        const total = invoiceData?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+        const monthNames = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj'];
 
-        setStats(prev => ({
-          ...prev,
-          totalClients: clientCount || 0,
-          activeProjects: activeProjectCount || 0,
-          unpaidInvoices: unpaid,
-          totalRevenue: total
-        }));
+        const [
+          { count: clientCount },
+          { data: allInvoiceData },
+          { count: activeProjectCount },
+          { data: allClients },
+          { data: latestInvoices },
+          { data: allTasks },
+          { data: portfolioData },
+        ] = await Promise.all([
+          supabase.from('clients').select('*', { count: 'exact', head: true }),
+          supabase.from('invoices').select('amount, status, date'),
+          supabase.from('tasks').select('*', { count: 'exact', head: true }).neq('status', 'done'),
+          supabase.from('clients').select('*').order('created_at', { ascending: false }).limit(5),
+          supabase.from('invoices').select('*, clients(name)').order('date', { ascending: false }).limit(5),
+          supabase.from('tasks').select('status'),
+          supabase.from('portfolio_projects').select('is_published'),
+        ]);
 
-        // Klientë të fundit
-        const { data: clients } = await supabase.from('clients').select('*').order('created_at', { ascending: false }).limit(5);
-        setRecentClients(clients || []);
+        const invoices = allInvoiceData || [];
+        const unpaid = invoices.filter(i => i.status === 'unpaid').length;
+        const paid = invoices.filter(i => i.status === 'paid').length;
+        const total = invoices.reduce((acc, curr) => acc + Number(curr.amount), 0);
 
-        // Faturat e fundit
-        const { data: invoices } = await supabase.from('invoices').select('*, clients(name)').order('date', { ascending: false }).limit(5);
-        setRecentInvoices(invoices || []);
+        setStats({ totalClients: clientCount || 0, activeProjects: activeProjectCount || 0, unpaidInvoices: unpaid, totalRevenue: total });
+
+        // Monthly revenue — last 6 months
+        const now = new Date();
+        const monthMap: Record<string, number> = {};
+        invoices.forEach(inv => {
+          if (!inv.date) return;
+          const d = new Date(inv.date);
+          const key = `${d.getFullYear()}-${d.getMonth()}`;
+          monthMap[key] = (monthMap[key] || 0) + Number(inv.amount);
+        });
+        const last6 = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+          const key = `${d.getFullYear()}-${d.getMonth()}`;
+          return { name: monthNames[d.getMonth()], fitimi: Math.round(monthMap[key] || 0) };
+        });
+        setChartData(last6);
+
+        // Performance bars
+        const tasks = allTasks || [];
+        const portfolio = portfolioData || [];
+        setPerformanceStats({
+          paymentRate: invoices.length > 0 ? Math.round((paid / invoices.length) * 100) : 0,
+          projectCompletion: tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) : 0,
+          portfolioPublished: portfolio.length > 0 ? Math.round((portfolio.filter(p => p.is_published).length / portfolio.length) * 100) : 0,
+          activeClientRate: clientCount ? Math.min(100, Math.round(((clientCount - unpaid) / clientCount) * 100)) : 0,
+        });
+
+        setRecentClients(allClients || []);
+        setRecentInvoices(latestInvoices || []);
       } catch {
       } finally {
         setLoading(false);
@@ -180,10 +206,10 @@ export default function Dashboard() {
         <div className="bg-[#1a1c23] p-6 rounded-2xl border border-white/5">
           <h3 className="text-lg font-bold text-white mb-6">Përmbledhje Performancës</h3>
           <div className="space-y-4">
-            <ProgressItem label="Web Development" percent={0} />
-            <ProgressItem label="Branding" percent={0} />
-            <ProgressItem label="Social Media" percent={0} />
-            <ProgressItem label="ERP/Sistemet" percent={0} />
+            <ProgressItem label="Pagesa (Norma)" percent={performanceStats.paymentRate} />
+            <ProgressItem label="Projekte të Kryera" percent={performanceStats.projectCompletion} />
+            <ProgressItem label="Portofoli Publikuar" percent={performanceStats.portfolioPublished} />
+            <ProgressItem label="Klientë Aktivë" percent={performanceStats.activeClientRate} />
           </div>
         </div>
       </div>
