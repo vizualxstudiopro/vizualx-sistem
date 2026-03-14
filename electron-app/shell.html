@@ -314,14 +314,25 @@
   </div>
 
   <script>
-    const api    = window.electronAPI;
-    const wv     = document.getElementById('wv');
-    const loader = document.getElementById('loader');
-    const dot    = document.getElementById('status-dot');
-    const stxt   = document.getElementById('status-txt');
-    const offBar = document.getElementById('offline-bar');
-    const syncBtn= document.getElementById('sync-btn');
-    const BASE   = 'https://www.vizualx.online';
+    const api     = window.electronAPI;
+    const wv      = document.getElementById('wv');
+    const loader  = document.getElementById('loader');
+    const dot     = document.getElementById('status-dot');
+    const stxt    = document.getElementById('status-txt');
+    const offBar  = document.getElementById('offline-bar');
+    const syncBtn = document.getElementById('sync-btn');
+    const titleBar = document.getElementById('titlebar');
+    const BASE    = 'https://www.vizualx.online';
+
+    function fitWebviewHeight() {
+      const titleH = titleBar?.offsetHeight || 0;
+      const offlineH = offBar.classList.contains('show') ? (offBar.offsetHeight || 0) : 0;
+      const available = Math.max(240, window.innerHeight - titleH - offlineH);
+      wv.style.height = `${available}px`;
+    }
+
+    window.addEventListener('resize', fitWebviewHeight);
+    fitWebviewHeight();
 
     // ── Window controls ───────────────────────────
     document.getElementById('btn-min').addEventListener('click', () => api.minimize());
@@ -390,10 +401,12 @@
       stxt.textContent = 'Live';
       offBar.classList.remove('show');
       loader.classList.add('hide');
+      fitWebviewHeight();
     });
 
     wv.addEventListener('did-finish-load', () => {
       loader.classList.add('hide');
+      fitWebviewHeight();
     });
 
     wv.addEventListener('did-fail-load', (e) => {
@@ -401,6 +414,7 @@
       dot.className = 'offline';
       stxt.textContent = 'Offline';
       offBar.classList.add('show');
+      fitWebviewHeight();
     });
 
     wv.addEventListener('did-navigate', (e) => {
@@ -415,11 +429,13 @@
       dot.className = 'offline';
       stxt.textContent = 'Offline';
       offBar.classList.add('show');
+      fitWebviewHeight();
     });
     window.addEventListener('online', () => {
       dot.className = '';
       stxt.textContent = 'Live';
       offBar.classList.remove('show');
+      fitWebviewHeight();
       wv.reload();
     });
   </script>
