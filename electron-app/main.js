@@ -8,6 +8,18 @@ let splashWindow = null;
 let tray = null;
 let isQuitting = false;
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+});
+
 // ─── Splash ───────────────────────────────────────────────────────────────────
 function createSplash() {
   splashWindow = new BrowserWindow({
