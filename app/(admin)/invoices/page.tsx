@@ -102,16 +102,6 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   const right = pageWidth - 36;
   const left = 36;
 
-  const vehicleInfo = [
-    "Marka: -",
-    "Modeli: -",
-    "Viti: -",
-    "Targa: -",
-    "Nr. Shasie: -",
-    "Ngjyra: -",
-    "Karburanti: -",
-  ];
-
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(26);
@@ -147,7 +137,6 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text("FATURUAR PER:", 40, 234);
-  doc.text("TE DHENAT E MJETIT", 330, 234);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
@@ -155,8 +144,8 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
     `Emri: ${clientName}`,
     `ID/CIF: ${settings.clientCif}`,
     `Adresa: ${clientCompany || "-"}`,
-    `Kodi Postar: -`,
     `Telefoni: ${clientPhone || "-"}`,
+    `Email: ${clientEmail || "-"}`,
   ];
 
   let yLeft = 258;
@@ -165,13 +154,7 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
     yLeft += 24;
   });
 
-  let yRight = 258;
-  vehicleInfo.forEach((line) => {
-    doc.text(line, 330, yRight);
-    yRight += 24;
-  });
-
-  const tableTop = 430;
+  const tableTop = 380;
   doc.setLineWidth(0.7);
   doc.rect(36, tableTop, 523, 32);
   doc.line(430, tableTop, 430, tableTop + 32);
@@ -195,45 +178,45 @@ async function buildInvoicePdf(invoice: Invoice, settings: InvoicePdfSettings) {
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
-  doc.text("Nentotali:", 470, 532, { align: "right" });
-  doc.text(amount, 550, 532, { align: "right" });
-  doc.text("TVSH (0%):", 470, 556, { align: "right" });
-  doc.text("0.00 ALL", 550, 556, { align: "right" });
+  doc.text("Nentotali:", 470, 482, { align: "right" });
+  doc.text(amount, 550, 482, { align: "right" });
+  doc.text("TVSH (0%):", 470, 506, { align: "right" });
+  doc.text("0.00 ALL", 550, 506, { align: "right" });
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text("TOTAL:", 470, 582, { align: "right" });
-  doc.text(amount, 550, 582, { align: "right" });
+  doc.text("TOTAL:", 470, 532, { align: "right" });
+  doc.text(amount, 550, 532, { align: "right" });
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text("Faleminderit qe zgjodhet sherbimet tona.", 40, 636);
+  doc.text("Faleminderit qe zgjodhet sherbimet tona.", 40, 586);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Kushtet e Pageses", 40, 670);
+  doc.text("Kushtet e Pageses", 40, 620);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Pagesa duhet te behet brenda 3 diteve nga data e fatures.", 40, 688);
-  doc.text("Ju lutem kryeni pagesen ne llogarine e meposhtme:", 40, 704);
-  doc.text(`Banka: ${settings.bankName}`, 40, 726);
-  doc.text(`BIC (SWIFT): ${settings.bankSwift}`, 40, 742);
-  doc.text(`Emri i llogarise: ${settings.bankAccountTitle}`, 40, 758);
-  doc.text(`IBAN: ${settings.bankIban}`, 40, 774);
+  doc.text("Pagesa duhet te behet brenda 3 diteve nga data e fatures.", 40, 638);
+  doc.text("Ju lutem kryeni pagesen ne llogarine e meposhtme:", 40, 654);
+  doc.text(`Banka: ${settings.bankName}`, 40, 676);
+  doc.text(`BIC (SWIFT): ${settings.bankSwift}`, 40, 692);
+  doc.text(`Emri i llogarise: ${settings.bankAccountTitle}`, 40, 708);
+  doc.text(`IBAN: ${settings.bankIban}`, 40, 724);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Shenim!", 330, 670);
+  doc.text("Shenim!", 330, 620);
   doc.setFont("helvetica", "italic");
-  doc.text("Per cdo pyetje ose sqarim ne lidhje me kete fature,", 330, 688);
-  doc.text(`ju lutem na kontaktoni ne: ${settings.companyEmail}`, 330, 704);
+  doc.text("Per cdo pyetje ose sqarim ne lidhje me kete fature,", 330, 638);
+  doc.text(`ju lutem na kontaktoni ne: ${settings.companyEmail}`, 330, 654);
 
-  doc.line(36, 792, right, 792);
-  doc.addImage(qrDataUrl, "PNG", 46, 800, 72, 72);
+  doc.line(36, 742, right, 742);
+  doc.addImage(qrDataUrl, "PNG", 46, 752, 72, 72);
 
   doc.setFont("helvetica", "italic");
   doc.setFontSize(8.5);
   doc.text(
     "Ky dokument eshte gjeneruar me ane te nje procedure automatike nga nje sistem elektronik.",
     pageWidth / 2,
-    835,
+    785,
     { align: "center" }
   );
 
