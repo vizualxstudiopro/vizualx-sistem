@@ -1,0 +1,68 @@
+appId: online.vizualx.panel
+productName: VizualX Panel
+copyright: Copyright © 2024-2026 VizualX
+asar: true
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - main.js
+  - preload.js
+  - shell.html
+  - splash.html
+  - build/**
+  - package.json
+
+# ── Windows ────────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: build/icon.ico
+  requestedExecutionLevel: asInvoker
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: VizualX Panel
+  differentialPackage: false
+  deleteAppDataOnUninstall: false
+  installerSidebar: build/installer-sidebar.bmp
+
+# ── macOS ──────────────────────────────────────────────────────────────────────
+mac:
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  target:
+    - dmg
+    - zip
+
+dmg:
+  title: VizualX Panel
+  icon: build/icon.icns
+  background: build/dmg-bg.png
+  window:
+    width: 540
+    height: 380
+
+# ── Linux ──────────────────────────────────────────────────────────────────────
+linux:
+  icon: build/icon.png
+  category: Office
+  target:
+    - AppImage
+    - deb
+  maintainer: info@vizualx.online
+  description: VizualX Admin Panel — Desktop Application

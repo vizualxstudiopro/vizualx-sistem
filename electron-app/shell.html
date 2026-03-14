@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VizualX Panel</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f1115;
+      --bar: #13151b;
+      --border: rgba(255,255,255,0.06);
+      --gold: #cfa861;
+      --gold-dim: rgba(207,168,97,0.15);
+      --gold-border: rgba(207,168,97,0.3);
+      --text: #e5e7eb;
+      --muted: #6b7280;
+      --bar-h: 44px;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      min-height: 100%;
+      color: var(--text);
+      user-select: none;
+    }
+
+    /* ── Title Bar ────────────────────────────────── */
+    #titlebar {
+      height: var(--bar-h);
+      min-height: var(--bar-h);
+      background: var(--bar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px 0 14px;
+      gap: 8px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1000;
+      -webkit-app-region: drag;
+    }
+    .nd { -webkit-app-region: no-drag; }
+
+    /* Logo */
+    #logo-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: white;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #logo-btn:hover { background: rgba(255,255,255,0.05); }
+    #logo-btn .x { color: var(--gold); }
+
+    /* Nav */
+    #nav {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      margin-left: 6px;
+      overflow: hidden;
+    }
+    .nb {
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .nb:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+    .nb.active { background: var(--gold-dim); color: var(--gold); }
+
+    .spacer { flex: 1; }
+
+    /* Status pill */
+    #status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 4px;
+    }
+    #status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 5px #22c55e80;
+      transition: all 0.3s;
+    }
+    #status-dot.loading { background: var(--gold); box-shadow: 0 0 5px rgba(207,168,97,0.6); }
+    #status-dot.offline { background: var(--muted); box-shadow: none; }
+    #status-txt { font-size: 11px; color: var(--muted); }
+
+    /* Sync button */
+    #sync-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 7px;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      color: var(--gold);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    #sync-btn:hover { background: rgba(207,168,97,0.22); border-color: rgba(207,168,97,0.5); }
+    #sync-btn:active { transform: scale(0.97); }
+    #sync-icon { transition: transform 0.1s; flex-shrink: 0; }
+    #sync-btn.spinning #sync-icon { animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Window controls */
+    #win-btns {
+      display: flex;
+      align-items: center;
+      margin-left: 6px;
+    }
+    .wb {
+      width: 34px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 5px;
+      color: var(--muted);
+      transition: all 0.1s;
+    }
+    .wb:hover { background: rgba(255,255,255,0.08); color: white; }
+    .wb.wclose:hover { background: #ef4444; color: white; }
+
+    /* ── Offline bar ──────────────────────────────── */
+    #offline-bar {
+      background: #7c2d12;
+      border-bottom: 1px solid #c2410c;
+      padding: 5px 16px;
+      font-size: 12px;
+      color: #fca5a5;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #offline-bar.show { display: flex; }
+
+    /* ── Content area ────────────────────────────── */
+    #content-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+      display: flex;
+    }
+
+    webview {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      flex: 1 1 auto;
+      border: none;
+      display: block;
+    }
+
+    /* ── Loading overlay ──────────────────────────── */
+    #loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: var(--bg);
+      z-index: 100;
+    }
+    #loader.hide { display: none; }
+    .spin-ring {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(207,168,97,0.15);
+      border-top-color: var(--gold);
+      animation: spin 0.8s linear infinite;
+    }
+    #loader p { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Title Bar ────────────────────────────────── -->
+  <div id="titlebar">
+
+    <!-- Logo -->
+    <div id="logo-btn" class="nd" title="Dashboard">
+      <svg width="22" height="22" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="160" rx="18" fill="#101010"/>
+        <g transform="translate(40,32)">
+          <path d="M15 15 L40 40 L15 65 L28 65 L53 40 L28 15 Z" fill="#C5A059"/>
+          <path d="M65 15 L40 40 L65 65 L52 65 L27 40 L52 15 Z" fill="#C5A059"/>
+        </g>
+      </svg>
+      VIZUAL<span class="x">X</span>
+    </div>
+
+    <!-- Navigation links -->
+    <nav id="nav" class="nd">
+      <button class="nb active" data-path="/dashboard">Dashboard</button>
+      <button class="nb" data-path="/clients">Klientët</button>
+      <button class="nb" data-path="/invoices">Faturat</button>
+      <button class="nb" data-path="/projects">Projektet</button>
+      <button class="nb" data-path="/domains">Domainet</button>
+      <button class="nb" data-path="/assets">Media</button>
+      <button class="nb" data-path="/portfolio-manager">Portofoli</button>
+      <button class="nb" data-path="/analytics">Analitika</button>
+      <button class="nb" data-path="/settings">Cilësimet</button>
+    </nav>
+
+    <div class="spacer"></div>
+
+    <!-- Status indicator -->
+    <div id="status-wrap" class="nd">
+      <div id="status-dot"></div>
+      <span id="status-txt">Live</span>
+    </div>
+
+    <!-- Sync button -->
+    <button id="sync-btn" class="nd" title="Sinkronizo të dhënat me Web &amp; Mobile">
+      <svg id="sync-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+      Sync
+    </button>
+
+    <!-- Window controls -->
+    <div id="win-btns" class="nd">
+      <button class="wb" id="btn-min" title="Minimizo">
+        <svg width="10" height="1.5" viewBox="0 0 10 1.5">
+          <rect width="10" height="1.5" rx="0.75" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="wb" id="btn-max" title="Maksimizimdhe / Rivendos">
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <rect x="1" y="1" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+      </button>
+      <button class="wb wclose" id="btn-close" title="Mbyll">
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Offline bar -->
+  <div id="offline-bar">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    Nuk ka lidhje interneti. Paneli nuk mund të ngarkohet.
+  </div>
+
+  <!-- Content area: webview fills all remaining height -->
+  <div id="content-area">
+    <!-- Panel WebView — loads the live web admin panel -->
+    <webview
+      id="wv"
+      src="https://www.vizualx.online/dashboard"
+      partition="persist:vizualx"
+      allowpopups
+    ></webview>
+
+    <!-- Loading overlay on top of webview -->
+    <div id="loader">
+      <div class="spin-ring"></div>
+      <p>Duke ngarkuar panelin…</p>
+    </div>
+  </div>
+
+  <script>
+    const api    = window.electronAPI;
+    const wv     = document.getElementById('wv');
+    const loader = document.getElementById('loader');
+    const dot    = document.getElementById('status-dot');
+    const stxt   = document.getElementById('status-txt');
+    const offBar = document.getElementById('offline-bar');
+    const syncBtn= document.getElementById('sync-btn');
+    const BASE   = 'https://www.vizualx.online';
+
+    // ── Window controls ───────────────────────────
+    document.getElementById('btn-min').addEventListener('click', () => api.minimize());
+    document.getElementById('btn-max').addEventListener('click', () => api.maximize());
+    document.getElementById('btn-close').addEventListener('click', () => api.close());
+
+    // Maximize icon swap
+    api.onWindowState((state) => {
+      const icon = document.getElementById('btn-max').querySelector('svg');
+      if (state === 'maximized') {
+        icon.innerHTML = '<path d="M2 8h6V2m0 0H2m6 0v6M8 16h6v6m0 0h-6m6 0v-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      } else {
+        icon.innerHTML = '<rect x="1" y="1" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>';
+      }
+    });
+
+    // ── Navigation ────────────────────────────────
+    document.getElementById('logo-btn').addEventListener('click', () => go('/dashboard'));
+    document.querySelectorAll('.nb').forEach(btn => {
+      btn.addEventListener('click', () => go(btn.dataset.path));
+    });
+
+    function go(path) {
+      wv.loadURL(BASE + path);
+      setActive(path);
+    }
+
+    function setActive(path) {
+      document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+      const matches = [...document.querySelectorAll('.nb')].filter(b => {
+        const bp = b.dataset.path;
+        return path === bp || (path.startsWith(bp) && bp !== '/dashboard');
+      });
+      if (matches.length) matches[matches.length - 1].classList.add('active');
+      else {
+        // fallback: if on /dashboard by exact match
+        const dash = document.querySelector('[data-path="/dashboard"]');
+        if (path === '/dashboard' || path === '/') dash?.classList.add('active');
+      }
+    }
+
+    // Sync button
+    syncBtn.addEventListener('click', doSync);
+
+    function doSync() {
+      syncBtn.classList.add('spinning');
+      api.sync();                 // notifies main → could broadcast to other clients
+      wv.reloadIgnoringCache();
+      setTimeout(() => syncBtn.classList.remove('spinning'), 1200);
+    }
+
+    // Listen for sync triggered from tray menu
+    api.onDoSync(() => doSync());
+
+    // Navigate from tray
+    api.onNavigateTo((path) => go(path));
+
+    // ── WebView events ────────────────────────────
+    wv.addEventListener('did-start-loading', () => {
+      dot.className = 'loading';
+      stxt.textContent = 'Duke ngarkuar…';
+    });
+
+    wv.addEventListener('did-stop-loading', () => {
+      dot.className = '';
+      stxt.textContent = 'Live';
+      offBar.classList.remove('show');
+      loader.classList.add('hide');
+    });
+
+    wv.addEventListener('did-finish-load', () => {
+      loader.classList.add('hide');
+    });
+
+    wv.addEventListener('did-fail-load', (e) => {
+      if (e.errorCode === -3) return; // aborted/cancelled — ignore
+      dot.className = 'offline';
+      stxt.textContent = 'Offline';
+      offBar.classList.add('show');
+    });
+
+    wv.addEventListener('did-navigate', (e) => {
+      try { setActive(new URL(e.url).pathname); } catch {}
+    });
+    wv.addEventListener('did-navigate-in-page', (e) => {
+      try { setActive(new URL(e.url).pathname); } catch {}
+    });
+
+    // ── Network detection ─────────────────────────
+    window.addEventListener('offline', () => {
+      dot.className = 'offline';
+      stxt.textContent = 'Offline';
+      offBar.classList.add('show');
+    });
+    window.addEventListener('online', () => {
+      dot.className = '';
+      stxt.textContent = 'Live';
+      offBar.classList.remove('show');
+      wv.reload();
+    });
+  </script>
+</body>
+</html>

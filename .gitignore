@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# electron build artifacts
+electron-app/node_modules/
+electron-app/dist/
+electron-app/.cache/
+electron-app/*.log
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
