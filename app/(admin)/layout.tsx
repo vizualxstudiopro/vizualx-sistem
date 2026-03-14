@@ -7,9 +7,9 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0f1115]">
+    <div className="flex min-h-screen bg-[#0f1115]">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto relative pt-14 md:pt-0 pb-[env(safe-area-inset-bottom)]">
+      <main className="relative flex-1 min-h-screen overflow-y-auto pt-14 pb-[env(safe-area-inset-bottom)] md:pt-0">
         {children}
       </main>
       <AndroidInstallPrompt />

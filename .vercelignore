@@ -1,0 +1,19 @@
+# Exclude local app wrappers and generated artifacts from Vercel upload
+electron-app/**
+android/**
+
+# Build caches/artifacts
+.next/**
+out/**
+build/**
+coverage/**
+
+# Dependencies
+node_modules/**
+
+# Repo internals
+.git/**
+.vscode/**
+
+# Logs
+*.log
