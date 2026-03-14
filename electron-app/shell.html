@@ -334,6 +334,15 @@
     window.addEventListener('resize', fitWebviewHeight);
     fitWebviewHeight();
 
+    wv.addEventListener('dom-ready', () => {
+      // Keep desktop panel at stable 100% zoom to avoid clipped layouts.
+      try {
+        wv.setZoomFactor(1);
+        wv.setVisualZoomLevelLimits(1, 1);
+      } catch {}
+      fitWebviewHeight();
+    });
+
     // ── Window controls ───────────────────────────
     document.getElementById('btn-min').addEventListener('click', () => api.minimize());
     document.getElementById('btn-max').addEventListener('click', () => api.maximize());
